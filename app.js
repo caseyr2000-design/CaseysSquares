@@ -225,13 +225,15 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     const top = el("div", "team-top");
     if (img.logoTop) { const i = el("img", "logo"); i.src = img.logoTop; i.alt = ""; top.append(i); }
     top.append(el("span", null, cf.teamTop + " →"));
+    top.append(el("span", "both-down", "· " + cf.teamSide + " ↓"));
     const side = el("div", "team-side");
     if (img.logoSide) { const i = el("img", "logo"); i.src = img.logoSide; i.alt = ""; side.append(i); }
     side.append(el("span", "vt", cf.teamSide + " →"));
 
     const b = el("div", "board"); b.setAttribute("role", "grid"); b.setAttribute("aria-label", "Squares board");
     const corner = el("div", "hd corner hdrow");
-    if (cf.nums && S.period === "all") { corner.classList.add("quad"); for (const q of QUARTERS) corner.append(el("span", null, q[2])); }
+    if (cf.nums && S.period === "all" && !isCompact()) { corner.classList.add("quad"); for (const q of QUARTERS) corner.append(el("span", null, q[2])); }
+    else if (cf.nums && S.period === "all") corner.textContent = "#";
     else corner.textContent = cf.nums ? QUARTERS.find((q) => q[0] === S.period)[2] : "#";
     b.append(corner);
     for (let c = 0; c < 10; c++) { const h = headerCell(cf.nums, "col", c); h.classList.add("hdrow"); b.append(h); }
@@ -242,13 +244,13 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
         btn.type = "button"; btn.dataset.id = id;
         if (sq) {
           btn.classList.add("taken", sq.paid ? "paid" : "unpaid"); if (sq.mine) btn.classList.add("mine");
-          const n = el("span", "nm ff-" + (sq.font || "clean"), sq.name);
+          const n = el("span", "nm ff-" + (sq.font || "clean")), np = nameParts(sq.name);
+          n.append(el("span", "n-full", sq.name), el("span", "n-short", np.short), el("span", "n-init", np.init));
           if (sq.color && sq.color !== "ink") n.style.setProperty("--pc", "var(--pc-" + sq.color + ")");
           const label = sq.paid ? "PAID" : (sq.mine && sq.expiresAt ? minsLeft(sq) + "m left" : "UNPAID");
           btn.append(n, el("span", "pd", label));
           btn.setAttribute("aria-label", pos(id) + ", " + sq.name + ", " + (sq.paid ? "paid" : "unpaid"));
-          if (!me.admin) btn.disabled = true;
-          else btn.title = sq.paid ? "Tap to mark unpaid" : "Tap to mark paid";
+          btn.title = sq.name + (sq.paid ? " · paid" : " · unpaid");
         } else if (S.selected.has(id)) {
           btn.classList.add("selected"); btn.setAttribute("aria-label", pos(id) + ", selected");
         } else {
@@ -266,27 +268,47 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     $("boardNote").textContent = cf.nums
       ? "Each period has its own random numbers. Use the tabs to see one set at a time. The square matching the last digit of each team's score wins that period; the last payout uses the final score, overtime included."
       : "Four sets of random numbers (Q1, halftime, Q3, final score) are drawn when the commissioner locks the board.";
+    $("boardNote").textContent += " Tap a taken square to see whose it is.";
   }
 
   // ---------- zoom / big board ----------
+  // Phones drop the sideways team label and narrow the number column so the squares can be as big as possible.
+  const isCompact = () => window.innerWidth < 600 && !S.big;
   function fitCell(w, h) {
-    let c = (w - 40) / 11.4;
-    if (h) c = Math.min(c, (h - 40) / 11.6);
+    const compact = isCompact(), rowHead = compact ? 0.6 : 0.8;
+    const side = compact ? 0 : Math.max(30, Math.min(70, w * 0.04)) + 6;
+    let c = (w - side - 26) / (10 + rowHead);
+    if (h) c = Math.min(c, (h - 70) / (10 + rowHead + 0.7));
     return Math.floor(c);
   }
   function applyZoom() {
     let cell;
-    if (S.big) { const body = $("bigBody"); cell = Math.max(28, Math.min(160, fitCell(body.clientWidth, body.clientHeight))); }
-    else if (S.zoom === "fit") cell = Math.max(32, Math.min(76, fitCell($("scroller").clientWidth)));
+    const field = $("field");
+    field.classList.toggle("compact", isCompact());
+    field.classList.toggle("short", S.big && window.innerHeight < 560);
+    if (S.big) {
+      const body = $("bigBody"), short = window.innerHeight < 560, rowHead = 0.8;
+      const side = Math.max(30, Math.min(70, body.clientWidth * 0.04)) + 6;
+      const byW = (body.clientWidth - side - 26) / (10 + rowHead);
+      const byH = (body.clientHeight - (short ? 8 : 60) - 26) / (10 + rowHead);
+      // Short screens (phones sideways) can't fit the whole board, so keep squares tappable and let it scroll.
+      cell = Math.floor(short ? Math.max(20, Math.min(46, byW)) : Math.max(20, Math.min(160, byW, byH)));
+    }
+    else if (S.zoom === "fit") cell = Math.max(24, Math.min(76, fitCell($("scroller").clientWidth)));
     else cell = Number(S.zoom);
-    $("field").style.setProperty("--cell", cell + "px");
-    const brd = $("field").querySelector(".board"); if (brd) brd.classList.toggle("small", cell < 40);
+    field.style.setProperty("--cell", cell + "px");
+    const brd = field.querySelector(".board");
+    if (brd) {
+      brd.classList.toggle("small", cell < 40);
+      brd.classList.toggle("lvl-i", cell < 44);
+      brd.classList.toggle("lvl-s", cell >= 44 && cell < 100);
+    }
     $("zoomFit").setAttribute("aria-pressed", String(S.zoom === "fit"));
     S.curCell = cell;
   }
   function setZoom(delta) {
     const cur = S.curCell || 48;
-    S.zoom = String(Math.max(26, Math.min(140, Math.round(cur * (delta > 0 ? 1.2 : 1 / 1.2)))));
+    S.zoom = String(Math.max(24, Math.min(140, Math.round(cur * (delta > 0 ? 1.25 : 1 / 1.25)))));
     store.set("sq_zoom", S.zoom); applyZoom();
   }
   $("zoomIn").onclick = () => setZoom(1);
@@ -311,12 +333,82 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   $("field").addEventListener("click", (e) => {
     const c = e.target.closest(".cell"); if (!c || c.disabled || !S.st) return;
     const id = c.dataset.id, sq = live()[id];
-    if (sq) { if (S.st.admin) adminDo(() => B.setPaid([id], !sq.paid)); return; }
+    if (sq) { openSheet(id); return; }
+    closeSheet();
     if (S.st.cfg.locked) return;
     if (inviteMode() && !S.st.me && !S.st.admin) { showMsg("claimMsg", "You need your invitation link to pick squares.", "err"); return; }
     S.selected.has(id) ? S.selected.delete(id) : S.selected.add(id);
     hide("claimMsg"); renderBoard(); renderClaim();
   });
+
+  // ---------- names that fit small squares ----------
+  function nameParts(name) {
+    const w = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!w.length) return { short: "", init: "" };
+    if (w.length === 1) return { short: w[0], init: w[0].slice(0, 3) };
+    return { short: w[0] + " " + w[w.length - 1][0] + ".", init: (w[0][0] + w[w.length - 1][0]).toUpperCase() };
+  }
+
+  // ---------- square details sheet (tap a taken square) ----------
+  let sheetId = null;
+  function openSheet(id) { sheetId = id; renderSheet(); }
+  function closeSheet() { sheetId = null; $("cellSheet").hidden = true; renderBar(); }
+  function renderSheet() {
+    const sh = $("cellSheet");
+    if (!sheetId || !S.st) { sh.hidden = true; return; }
+    const sq = live()[sheetId];
+    if (!sq) { closeSheet(); return; }
+    const cf = S.st.cfg, [r, c] = rc(sheetId);
+    const nm = $("sheetName"); nm.className = "sheet-name ff-" + (sq.font || "clean"); nm.textContent = sq.name;
+    nm.style.setProperty("--pc", sq.color && sq.color !== "ink" ? "var(--pc-" + sq.color + ")" : "var(--ink)");
+    let where = pos(sheetId);
+    if (cf.nums) {
+      if (S.period === "all") where += " · " + cf.teamTop + "/" + cf.teamSide + ": " + QUARTERS.map((q) => q[2] + " " + cf.nums[q[0]].col[c] + "-" + cf.nums[q[0]].row[r]).join(", ");
+      else { const p = S.period, lab = QUARTERS.find((q) => q[0] === p)[2]; where += " · " + lab + ": " + cf.teamTop + " " + cf.nums[p].col[c] + ", " + cf.teamSide + " " + cf.nums[p].row[r]; }
+    }
+    $("sheetWhere").textContent = where;
+    const st = $("sheetStatus");
+    st.textContent = sq.paid ? "Paid" : sq.expiresAt ? "Unpaid · releases in " + minsLeft(sq) + " min" : "Unpaid";
+    st.className = "sheet-status " + (sq.paid ? "ok" : "warn");
+    const acts = $("sheetActs"); acts.replaceChildren();
+    if (S.st.admin) {
+      const p = el("button", "btn", sq.paid ? "Mark unpaid" : "Mark paid"); p.type = "button";
+      p.onclick = () => adminDo(() => B.setPaid([sheetId], !sq.paid), sq.paid ? "Marked unpaid." : "Marked paid.").then(renderSheet);
+      acts.append(p);
+      if (!sq.paid) {
+        const rl = el("button", "btn ghost", "Release square"); rl.type = "button";
+        rl.onclick = () => { if (rl.dataset.armed) { adminDo(() => B.adminRelease([sheetId]), "Square released."); closeSheet(); } else { rl.dataset.armed = "1"; rl.textContent = "Tap again to release"; rl.classList.add("warn"); } };
+        acts.append(rl);
+      }
+    } else if (sq.mine && !sq.paid && !cf.locked) {
+      const g = el("button", "btn ghost", "Give this square back"); g.type = "button";
+      g.onclick = async () => { try { await B.release(sheetId); closeSheet(); } catch (e) { showMsg("claimMsg", e.message, "err"); } };
+      acts.append(g);
+    }
+    sh.hidden = false; renderBar();
+  }
+  $("sheetClose").onclick = closeSheet;
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && sheetId) closeSheet(); });
+
+  // ---------- sticky claim bar (phones and everywhere once squares are selected) ----------
+  function renderBar() {
+    const bar = $("claimBar");
+    const n = S.selected.size, cf = S.st && S.st.cfg;
+    const show = !!(cf && n && !cf.locked && !sheetId);
+    bar.hidden = !show; document.body.classList.toggle("has-bar", show || !!sheetId);
+    if (!show) return;
+    $("barCount").textContent = n + " square" + (n > 1 ? "s" : "");
+    $("barTotal").textContent = money(n * cf.price);
+    const go = $("barGo"), main = $("claimBtn");
+    const adminOnly = S.st.admin && inviteMode() && !S.st.me;
+    go.textContent = adminOnly ? "Assign…" : S.busy ? "Claiming…" : main.disabled ? main.textContent : "Claim";
+    go.disabled = !adminOnly && (main.disabled || S.busy);
+  }
+  $("barGo").onclick = () => {
+    if (S.st.admin && inviteMode() && !S.st.me) { $("assignBox").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    $("claimBtn").click();
+  };
+  $("barClear").onclick = () => { S.selected.clear(); hide("claimMsg"); renderBoard(); renderClaim(); };
 
   // ---------- style picker ----------
   function buildPicker() {
@@ -374,6 +466,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
 
   function renderClaim() {
     if (!S.st) return;
+    queueMicrotask(renderBar);
     const cf = S.st.cfg, n = S.selected.size, btn = $("claimBtn"), inv = inviteMode(), me = S.st.me;
     const name = inv ? (me && me.name) || "" : $("myName").value.trim();
     $("selCount").textContent = n + " selected"; $("selTotal").textContent = money(n * cf.price);
@@ -405,6 +498,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       else showMsg("claimMsg", "Those squares were taken by someone else first. Pick open ones and try again.", "err");
     } catch (e) { showMsg("claimMsg", e.message, "err"); }
     S.busy = false; renderAll();
+    if (window.innerWidth < 960 && !$("myPanel").hidden) $("myPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    else if (window.innerWidth < 960 && !$("claimMsg").hidden) $("claimMsg").scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
   // ---------- your squares / pay ----------
@@ -742,6 +837,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   // ---------- main ----------
   function renderAll() {
     if (!S.st) return;
+    if (sheetId) renderSheet();
     for (const id of [...S.selected]) if (live()[id]) S.selected.delete(id);
     renderHeader(); renderTabs(); renderBoard(); renderClaim(); renderPicker(); renderMine(); renderPayouts(); renderAdmin();
   }
