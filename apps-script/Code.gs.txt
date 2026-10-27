@@ -1,0 +1,441 @@
+/**
+ * Gridiron Squares — Google Apps Script version (for embedding in Google Sites).
+ *
+ * Storage: Script Properties (settings, squares, players) and a Drive folder (logos and header photo).
+ * Setup:   Project Settings → Script properties → add ADMIN_PASSWORD. Then Deploy → New deployment →
+ *          Web app, Execute as: Me, Who has access: Anyone. Paste the web app URL into Google Sites
+ *          (Insert → Embed → By URL).
+ * GitHub Pages: the same deployment also answers the GitHub Pages board (see doPost). Put this web app
+ *          URL in the site's config.js.
+ * Invitations: only people with a personal invitation link (<web app URL>?invite=<code>) can pick squares.
+ * The commissioner sets each person's name; players pick their own font and color.
+ */
+
+var QUARTERS = ['q1', 'q2', 'q3', 'final'];
+var FONTS = ['clean', 'readable', 'stadium', 'handwritten', 'cursive', 'varsity', 'marker', 'slab', 'mono'];
+var COLORS = ['ink', 'red', 'orange', 'gold', 'green', 'teal', 'blue', 'purple', 'pink'];
+var SCHEMES = ['turf', 'black', 'blue', 'white', 'blackblue', 'bluewhite', 'crimson', 'purple'];
+var IMG_SLOTS = ['logoTop', 'logoSide', 'header'];
+var CELL_RE = /^r[0-9]c[0-9]$/;
+var DEFAULT_CFG = {
+  title: 'Sunday Night Squares', teamTop: 'Home', teamSide: 'Away', price: 10, holdMinutes: 60,
+  venmo: '', paypal: '', payouts: { q1: 20, q2: 25, q3: 20, final: 35 },
+  locked: false, nums: null, scores: {}, images: {}, scheme: 'turf'
+};
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Gridiron Squares')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// JSON API used by the GitHub Pages version of the board. The page POSTs {fn, args} as plain text
+// (a "simple" request, so browsers allow it from github.io) and gets {result} or {error} back.
+// Only the functions listed here can be called; each one does its own permission checks.
+function doPost(e) {
+  var API = {
+    getState: getState, claim: claim, release: release, restyle: restyle, getImage: getImage,
+    login: login, logout: logout, saveSettings: saveSettings, setPaid: setPaid, adminRelease: adminRelease,
+    draw: draw, reset: reset, saveScores: saveScores, uploadImage: uploadImage, removeImage: removeImage,
+    createInvite: createInvite, updateInvite: updateInvite, sendInvite: sendInvite, adminAssign: adminAssign,
+    exportLedger: exportLedger
+  };
+  var out;
+  try {
+    var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (!Object.prototype.hasOwnProperty.call(API, req.fn)) throw new Error('Unknown request.');
+    var args = Array.isArray(req.args) ? req.args.slice(0, 6) : [];
+    out = { result: API[req.fn].apply(null, args) };
+    if (out.result === undefined) out.result = null;
+  } catch (err) {
+    out = { error: String((err && err.message) || err) };
+  }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---------- helpers ----------
+function props_() { return PropertiesService.getScriptProperties(); }
+function clone_(o) { return JSON.parse(JSON.stringify(o)); }
+function getCfg_(all) {
+  var raw = (all || props_().getProperties())['cfg'];
+  var cfg = clone_(DEFAULT_CFG), saved = raw ? JSON.parse(raw) : {};
+  for (var k in saved) cfg[k] = saved[k];
+  cfg.payouts = Object.assign({}, DEFAULT_CFG.payouts, cfg.payouts || {});
+  cfg.images = cfg.images || {};
+  return cfg;
+}
+function saveCfg_(cfg) { props_().setProperty('cfg', JSON.stringify(cfg)); }
+function sha_(s) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8)
+    .map(function (b) { return ('0' + ((b + 256) % 256).toString(16)).slice(-2); }).join('');
+}
+function fail_(msg) { throw new Error(msg); }
+function clean_(s, max) { return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max); }
+function pick_(v, list, dflt) { return list.indexOf(v) >= 0 ? v : dflt; }
+function cells_(v) {
+  if (!Array.isArray(v)) return [];
+  var seen = {}, out = [];
+  v.forEach(function (c) { if (typeof c === 'string' && CELL_RE.test(c) && !seen[c]) { seen[c] = 1; out.push(c); } });
+  return out;
+}
+function shuffled_() {
+  var a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  for (var i = 9; i > 0; i--) {
+    // Random index from 32 random bits of a v4 UUID
+    var j = parseInt(Utilities.getUuid().replace(/-/g, '').slice(0, 8), 16) % (i + 1);
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+// Invitations: 'inv:<id>' = {id, token, name, email, font, color, createdAt, sentAt, revoked}; 'tok:<token>' = id
+function invites_(all) {
+  var out = {};
+  for (var k in all) if (k.indexOf('inv:') === 0) { var v = JSON.parse(all[k]); out[v.id] = v; }
+  return out;
+}
+function inviteByToken_(token, all) {
+  if (!token || !/^[a-f0-9]{32}$/.test(String(token))) return null;
+  var id = all['tok:' + token];
+  return id && all['inv:' + id] ? JSON.parse(all['inv:' + id]) : null;
+}
+function newToken_() { return Utilities.getUuid().replace(/-/g, '').slice(0, 16) + Utilities.getUuid().replace(/-/g, '').slice(0, 16); }
+function validEmail_(e) { return /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(e); }
+function isAdmin_(adminToken) {
+  if (!adminToken || String(adminToken).length > 100) return false;
+  return CacheService.getScriptCache().get('adm:' + sha_(adminToken)) === '1';
+}
+function requireAdmin_(t) { if (!isAdmin_(t)) fail_('Commissioner login required. Log in again.'); }
+function withLock_(fn) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) fail_('The board is busy. Try again in a moment.');
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+function squares_(all) {
+  var out = {};
+  for (var k in all) if (k.indexOf('sq:') === 0) out[k.slice(3)] = JSON.parse(all[k]);
+  return out;
+}
+// Unpaid holds expire while the board is open. Call while holding the lock.
+function purge_(cfg, all) {
+  if (cfg.locked) return;
+  var cutoff = Date.now() - cfg.holdMinutes * 60000, p = props_();
+  for (var k in all) if (k.indexOf('sq:') === 0) {
+    var s = JSON.parse(all[k]);
+    if (!s.paid && s.claimedAt < cutoff) { p.deleteProperty(k); delete all[k]; }
+  }
+}
+function publicCfg_(cfg) { var c = clone_(cfg); delete c.imageFiles; return c; }
+
+// ---------- player calls ----------
+function getState(playerToken, adminToken) {
+  var all = props_().getProperties(), cfg = getCfg_(all);
+  var lock = LockService.getScriptLock();
+  if (lock.tryLock(500)) { try { all = props_().getProperties(); purge_(cfg, all); } finally { lock.releaseLock(); } }
+  var me = inviteByToken_(playerToken, all), inv = invites_(all), sq = squares_(all), out = {}, hold = cfg.holdMinutes * 60000;
+  var counts = {};
+  for (var id in sq) {
+    var s = sq[id], who = s.iid != null ? inv[s.iid] : null;
+    if (s.iid != null) { var c = counts[s.iid] = counts[s.iid] || { squares: 0, paid: 0 }; c.squares++; if (s.paid) c.paid++; }
+    out[id] = {
+      name: who ? who.name : (s.name || 'Player'), font: who ? who.font : s.font, color: who ? who.color : s.color,
+      paid: !!s.paid, claimedAt: s.claimedAt,
+      owner: s.iid != null ? 'i' + s.iid : 'p' + s.pid, mine: !!me && s.iid === me.id,
+      expiresAt: !s.paid && !cfg.locked ? s.claimedAt + hold : null
+    };
+  }
+  var admin = isAdmin_(adminToken);
+  var res = {
+    cfg: publicCfg_(cfg), admin: admin, squares: out, canClaim: !!me && !me.revoked, canUpload: admin, inviteOnly: true,
+    me: me ? { name: me.name, font: me.font, color: me.color, revoked: !!me.revoked } : null
+  };
+  if (admin) {
+    res.appUrl = ScriptApp.getService().getUrl();
+    res.invites = Object.keys(inv).map(function (k) {
+      var v = inv[k], c = counts[v.id] || { squares: 0, paid: 0 };
+      return { id: v.id, token: v.token, name: v.name, email: v.email, font: v.font, color: v.color,
+        createdAt: v.createdAt, sentAt: v.sentAt || null, revoked: !!v.revoked, squares: c.squares, paid: c.paid };
+    });
+  }
+  return res;
+}
+
+function claimFor_(inviteId, cells) {
+  var pr = props_(), all = pr.getProperties(), cfg = getCfg_(all);
+  if (cfg.locked) fail_('The board is locked. Numbers have been drawn.');
+  purge_(cfg, all);
+  var won = [], lost = [], now = Date.now(), writes = {};
+  cells.forEach(function (c) {
+    if (all['sq:' + c]) { lost.push(c); return; }
+    writes['sq:' + c] = JSON.stringify({ iid: inviteId, paid: false, claimedAt: now });
+    won.push(c);
+  });
+  pr.setProperties(writes);
+  return { won: won, lost: lost };
+}
+
+function claim(playerToken, p) {
+  p = p || {};
+  var cells = cells_(p.cells);
+  if (!cells.length) fail_('Pick at least one square.');
+  // Simple flood guard: at most 40 claims a minute across the whole board
+  var cache = CacheService.getScriptCache(), n = Number(cache.get('claims') || 0);
+  if (n > 40) fail_('Lots of people are picking right now. Wait a minute and try again.');
+  cache.put('claims', String(n + 1), 60);
+  return withLock_(function () {
+    var me = inviteByToken_(playerToken, props_().getProperties());
+    if (!me) fail_('You need an invitation link to pick squares. Ask the commissioner for one.');
+    if (me.revoked) fail_('Your invitation has been turned off. Contact the commissioner.');
+    return claimFor_(me.id, cells);
+  });
+}
+
+function release(playerToken, cell) {
+  return withLock_(function () {
+    var all = props_().getProperties(), cfg = getCfg_(all), me = inviteByToken_(playerToken, all), raw = all['sq:' + cell];
+    if (cfg.locked) fail_('The board is locked.');
+    var s = raw && JSON.parse(raw);
+    if (!s || !me || s.iid !== me.id || s.paid) fail_('Only your own unpaid squares can be given back.');
+    props_().deleteProperty('sq:' + cell);
+    return true;
+  });
+}
+
+// One font and color per invitation; players change their own.
+function restyle(playerToken, style) {
+  style = style || {};
+  return withLock_(function () {
+    var me = inviteByToken_(playerToken, props_().getProperties());
+    if (!me) fail_('You need an invitation link to change your style.');
+    if (me.revoked) fail_('Your invitation has been turned off.');
+    me.font = pick_(style.font, FONTS, 'clean'); me.color = pick_(style.color, COLORS, 'ink');
+    props_().setProperty('inv:' + me.id, JSON.stringify(me));
+    return true;
+  });
+}
+
+function getImage(slot) {
+  if (IMG_SLOTS.indexOf(slot) < 0) return null;
+  var cfg = getCfg_(), fileId = (cfg.imageFiles || {})[slot];
+  if (!fileId) return null;
+  var cache = CacheService.getScriptCache(), key = 'img:' + slot + ':' + cfg.images[slot];
+  var hit = cache.get(key);
+  if (hit) return hit;
+  var blob = DriveApp.getFileById(fileId).getBlob();
+  var uri = 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes());
+  if (uri.length < 95000) cache.put(key, uri, 21600);
+  return uri;
+}
+
+// ---------- commissioner calls ----------
+function login(password) {
+  var cache = CacheService.getScriptCache(), fails = Number(cache.get('loginFails') || 0);
+  if (fails >= 10) fail_('Too many wrong passwords. Wait 15 minutes and try again.');
+  var real = props_().getProperty('ADMIN_PASSWORD');
+  if (!real) fail_('No commissioner password is set yet. Add ADMIN_PASSWORD under Project Settings → Script properties.');
+  if (String(password || '') !== real) { cache.put('loginFails', String(fails + 1), 900); fail_('Wrong password.'); }
+  var token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
+  cache.put('adm:' + sha_(token), '1', 21600); // 6 hours
+  return { token: token };
+}
+function logout(adminToken) { if (adminToken) CacheService.getScriptCache().remove('adm:' + sha_(adminToken)); return true; }
+
+function saveSettings(adminToken, b) {
+  requireAdmin_(adminToken); b = b || {};
+  return withLock_(function () {
+    var cfg = getCfg_(), payouts = {}, sum = 0;
+    QUARTERS.forEach(function (q) { payouts[q] = Math.max(0, Math.min(100, Math.round(Number(b.payouts && b.payouts[q]) || 0))); sum += payouts[q]; });
+    if (sum !== 100) fail_('Payout split adds up to ' + sum + '%. Make it 100%.');
+    var price = Number(b.price);
+    if (!(price >= 1 && price <= 10000)) fail_('Price must be between $1 and $10,000.');
+    var hold = Math.round(Number(b.holdMinutes));
+    if (!(hold >= 5 && hold <= 1440)) fail_('Unpaid hold must be between 5 and 1,440 minutes.');
+    var venmo = clean_(b.venmo, 31).replace(/^@/, '');
+    if (venmo && !/^[A-Za-z0-9_-]{5,30}$/.test(venmo)) fail_("That doesn't look like a Venmo username. Use the part after the @.");
+    var paypal = clean_(b.paypal, 40);
+    if (paypal && !/^[A-Za-z0-9]{1,40}$/.test(paypal)) fail_('Use just your PayPal.me name, the part after paypal.me/.');
+    var scheme = b.scheme == null ? cfg.scheme : b.scheme;
+    if (SCHEMES.indexOf(scheme) < 0) fail_('Pick one of the site color options.');
+    cfg.title = clean_(b.title, 40) || DEFAULT_CFG.title;
+    cfg.teamTop = clean_(b.teamTop, 20) || 'Home';
+    cfg.teamSide = clean_(b.teamSide, 20) || 'Away';
+    cfg.price = Math.round(price * 100) / 100; cfg.holdMinutes = hold;
+    cfg.venmo = venmo; cfg.paypal = paypal; cfg.payouts = payouts; cfg.scheme = scheme;
+    saveCfg_(cfg);
+    return true;
+  });
+}
+
+function setPaid(adminToken, cells, paid) {
+  requireAdmin_(adminToken);
+  return withLock_(function () {
+    var all = props_().getProperties(), writes = {};
+    cells_(cells).forEach(function (c) {
+      if (!all['sq:' + c]) return;
+      var s = JSON.parse(all['sq:' + c]); s.paid = !!paid; writes['sq:' + c] = JSON.stringify(s);
+    });
+    props_().setProperties(writes);
+    return true;
+  });
+}
+
+function adminRelease(adminToken, cells) {
+  requireAdmin_(adminToken);
+  return withLock_(function () { cells_(cells).forEach(function (c) { props_().deleteProperty('sq:' + c); }); return true; });
+}
+
+function draw(adminToken) {
+  requireAdmin_(adminToken);
+  return withLock_(function () {
+    var all = props_().getProperties(), cfg = getCfg_(all);
+    if (cfg.locked) fail_('Numbers are already drawn.');
+    purge_(cfg, all);
+    cfg.nums = {};
+    QUARTERS.forEach(function (q) { cfg.nums[q] = { col: shuffled_(), row: shuffled_() }; });
+    cfg.locked = true; saveCfg_(cfg);
+    return true;
+  });
+}
+
+function reset(adminToken) {
+  requireAdmin_(adminToken);
+  return withLock_(function () { var cfg = getCfg_(); cfg.locked = false; cfg.nums = null; cfg.scores = {}; saveCfg_(cfg); return true; });
+}
+
+function saveScores(adminToken, scores) {
+  requireAdmin_(adminToken); scores = scores || {};
+  return withLock_(function () {
+    var cfg = getCfg_(), out = {};
+    if (!cfg.nums) fail_('Draw the numbers first, then enter scores.');
+    QUARTERS.forEach(function (q) {
+      var s = scores[q];
+      if (!s || s.top === '' || s.side === '' || s.top == null || s.side == null) return;
+      var top = Number(s.top), side = Number(s.side);
+      if (!(top % 1 === 0 && side % 1 === 0 && top >= 0 && side >= 0 && top < 300 && side < 300)) fail_('Scores must be whole numbers.');
+      out[q] = { top: top, side: side };
+    });
+    cfg.scores = out; saveCfg_(cfg);
+    return true;
+  });
+}
+
+function imageFolder_() {
+  var id = props_().getProperty('imgFolder');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var f = DriveApp.createFolder('Gridiron Squares images');
+  props_().setProperty('imgFolder', f.getId());
+  return f;
+}
+
+function uploadImage(adminToken, slot, base64, mime) {
+  requireAdmin_(adminToken);
+  if (IMG_SLOTS.indexOf(slot) < 0) fail_('Unknown image slot.');
+  var bytes = Utilities.base64Decode(String(base64 || ''));
+  if (bytes.length > 4 * 1024 * 1024) fail_('That image is too large.');
+  var b = function (i) { return (bytes[i] + 256) % 256; };
+  var type = null;
+  if (bytes.length > 8 && b(0) === 0x89 && b(1) === 0x50 && b(2) === 0x4e && b(3) === 0x47) type = 'image/png';
+  else if (bytes.length > 3 && b(0) === 0xff && b(1) === 0xd8 && b(2) === 0xff) type = 'image/jpeg';
+  else if (bytes.length > 12 && String.fromCharCode(b(0), b(1), b(2), b(3)) === 'RIFF' && String.fromCharCode(b(8), b(9), b(10), b(11)) === 'WEBP') type = 'image/webp';
+  if (!type) fail_('Use a PNG, JPG or WebP image.');
+  var file = imageFolder_().createFile(Utilities.newBlob(bytes, type, slot));
+  return withLock_(function () {
+    var cfg = getCfg_(); cfg.imageFiles = cfg.imageFiles || {};
+    var old = cfg.imageFiles[slot];
+    cfg.imageFiles[slot] = file.getId(); cfg.images[slot] = Date.now(); saveCfg_(cfg);
+    if (old) { try { DriveApp.getFileById(old).setTrashed(true); } catch (e) {} }
+    return true;
+  });
+}
+
+function removeImage(adminToken, slot) {
+  requireAdmin_(adminToken);
+  return withLock_(function () {
+    var cfg = getCfg_(); cfg.imageFiles = cfg.imageFiles || {};
+    var old = cfg.imageFiles[slot];
+    delete cfg.imageFiles[slot]; delete cfg.images[slot]; saveCfg_(cfg);
+    if (old) { try { DriveApp.getFileById(old).setTrashed(true); } catch (e) {} }
+    return true;
+  });
+}
+
+// ---------- invitations (commissioner) ----------
+function createInvite(adminToken, b) {
+  requireAdmin_(adminToken); b = b || {};
+  var name = clean_(b.name, 24), email = clean_(b.email, 120);
+  if (!name) fail_("Add the person's name.");
+  if (!validEmail_(email)) fail_("That email address doesn't look right.");
+  return withLock_(function () {
+    var pr = props_(), all = pr.getProperties(), id = Number(all['nextIid'] || 1), token = newToken_(), w = {};
+    w['nextIid'] = String(id + 1);
+    w['inv:' + id] = JSON.stringify({ id: id, token: token, name: name, email: email, font: 'clean', color: 'ink', createdAt: Date.now(), sentAt: null, revoked: false });
+    w['tok:' + token] = String(id);
+    pr.setProperties(w);
+    return { id: id };
+  });
+}
+
+// Only the commissioner changes names; that name shows on all of the person's squares.
+function updateInvite(adminToken, id, b) {
+  requireAdmin_(adminToken); b = b || {};
+  return withLock_(function () {
+    var raw = props_().getProperty('inv:' + Number(id));
+    if (!raw) fail_('That invitation no longer exists.');
+    var inv = JSON.parse(raw);
+    if (b.name != null) { var n = clean_(b.name, 24); if (!n) fail_('Names can\'t be blank.'); inv.name = n; }
+    if (b.email != null) { var e = clean_(b.email, 120); if (!validEmail_(e)) fail_("That email address doesn't look right."); inv.email = e; }
+    if (b.revoked != null) inv.revoked = !!b.revoked;
+    props_().setProperty('inv:' + inv.id, JSON.stringify(inv));
+    return true;
+  });
+}
+
+// Sends the invitation from your Gmail account. The message text comes from the board.
+function sendInvite(adminToken, id, subject, body) {
+  requireAdmin_(adminToken);
+  var raw = props_().getProperty('inv:' + Number(id));
+  if (!raw) fail_('That invitation no longer exists.');
+  var inv = JSON.parse(raw), cfg = getCfg_();
+  if (inv.revoked) fail_('Turn this invitation on before sending it.');
+  subject = String(subject || '').slice(0, 200); body = String(body || '').slice(0, 5000);
+  if (body.indexOf(inv.token) < 0) fail_('The invitation text is missing the personal link. Reload the page and try again.');
+  if (MailApp.getRemainingDailyQuota() < 1) fail_('Google\'s daily email limit for your account is used up. Try again tomorrow, or use Copy link.');
+  GmailApp.sendEmail(inv.email, subject, body, { name: cfg.title });
+  return withLock_(function () {
+    var cur = JSON.parse(props_().getProperty('inv:' + inv.id));
+    cur.sentAt = Date.now(); props_().setProperty('inv:' + inv.id, JSON.stringify(cur));
+    return true;
+  });
+}
+
+// Commissioner claims open squares on a player's behalf (for example, someone who paid in cash).
+function adminAssign(adminToken, id, cells) {
+  requireAdmin_(adminToken);
+  cells = cells_(cells);
+  if (!cells.length) fail_('Select open squares on the board first.');
+  return withLock_(function () {
+    if (!props_().getProperty('inv:' + Number(id))) fail_('That invitation no longer exists.');
+    var r = claimFor_(Number(id), cells);
+    if (r.lost.length) fail_(r.won.length + ' assigned; ' + r.lost.length + ' were already taken.');
+    return r;
+  });
+}
+
+// Writes the payment ledger to a new Google Sheet in your Drive and returns its link.
+function exportLedger(adminToken) {
+  requireAdmin_(adminToken);
+  var all = props_().getProperties(), cfg = getCfg_(all), sq = squares_(all), inv = invites_(all), rows = [];
+  for (var id in sq) {
+    var s = sq[id], who = s.iid != null ? inv[s.iid] : null;
+    rows.push([who ? who.name : (s.name || 'Player'), who ? who.email : '', 'R' + (Number(id[1]) + 1) + 'C' + (Number(id[3]) + 1), s.paid ? 'yes' : 'no', cfg.price, new Date(s.claimedAt)]);
+  }
+  rows.sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[2] < b[2] ? -1 : 1; });
+  var ss = SpreadsheetApp.create(cfg.title + ' ledger ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'));
+  var sh = ss.getActiveSheet();
+  sh.getRange(1, 1, 1, 6).setValues([['Name', 'Email', 'Square', 'Paid', 'Amount', 'Claimed at']]).setFontWeight('bold');
+  if (rows.length) sh.getRange(2, 1, rows.length, 6).setValues(rows.map(function (r) {
+    return r.map(function (v) { return typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v; });
+  }));
+  sh.setFrozenRows(1);
+  return ss.getUrl();
+}
