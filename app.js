@@ -85,6 +85,8 @@ window.SquaresBackend = (function () {
     updateInvite: (id, b) => act("updateInvite", adm(), id, b),
     sendInvite: (id, subject, body) => act("sendInvite", adm(), id, subject, body),
     adminAssign: (id, cells) => act("adminAssign", adm(), id, cells),
+    requestInvite: (p) => run("requestInvite", p),
+    dismissRequest: (id) => act("dismissRequest", adm(), id),
     async login(password) { const r = await run("login", password); store.set("sq_admin", r.token); refresh(); },
     adminExtras() {
       const wrap = document.createElement("div");
@@ -174,9 +176,12 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     document.body.dataset.scheme = S.previewScheme || cf.scheme || "turf";
     $("title").textContent = cf.title;
     $("matchup").replaceChildren(teamEl(cf.teamTop, img.logoTop), el("span", "vs", "vs"), teamEl(cf.teamSide, img.logoSide));
-    const band = $("band");
-    band.classList.toggle("photo", !!img.header);
-    if (img.header) band.style.setProperty("--hero-img", 'url("' + img.header.replace(/"/g, "%22") + '")');
+    const band = $("band"), headerUrl = img.header || window.SQUARES_HEADER_IMAGE || "";
+    band.classList.remove("photo");
+    band.classList.toggle("has-banner", !!headerUrl);
+    $("banner").hidden = !headerUrl;
+    if (headerUrl && $("bannerImg").getAttribute("src") !== headerUrl) $("bannerImg").src = headerUrl;
+    placeHero();
     $("sPrice").textContent = money(cf.price);
     $("sLeft").textContent = 100 - all.length;
     $("sPot").textContent = money(all.filter((s) => s.paid).length * cf.price);
@@ -337,6 +342,14 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     closeSheet();
     if (S.st.cfg.locked) return;
     if (inviteMode() && !S.st.me && !S.st.admin) { showMsg("claimMsg", "You need your invitation link to pick squares.", "err"); return; }
+    if (!S.selected.has(id) && inviteMode() && S.st.me && !S.st.admin) {
+      const max = maxOf(S.st.cfg), held = Object.values(live()).filter((s) => s.mine).length;
+      if (max && held + S.selected.size >= max) {
+        showMsg("claimMsg", held >= max ? "You already have the maximum of " + max + " squares." : "The limit is " + max + " squares per player. You can pick " + (max - held) + ".", "err");
+        $("claimMsg").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+    }
     S.selected.has(id) ? S.selected.delete(id) : S.selected.add(id);
     hide("claimMsg"); renderBoard(); renderClaim();
   });
@@ -579,6 +592,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       setv("cTitle", cf.title); setv("cTop", cf.teamTop); setv("cSide", cf.teamSide); setv("cPrice", cf.price); setv("cHold", cf.holdMinutes);
       setv("cVenmo", cf.venmo ? "@" + cf.venmo : ""); setv("cPaypal", cf.paypal || "");
       setv("pQ1", cf.payouts.q1); setv("pQ2", cf.payouts.q2); setv("pQ3", cf.payouts.q3); setv("pF", cf.payouts.final);
+      setv("cMax", cf.maxPerPlayer == null ? DEFAULT_MAX : cf.maxPerPlayer); setv("cContact", cf.contactEmail || "");
+      setv("cRules", rulesOf(cf).join("\n"));
     }
 
     const cur = S.previewScheme || cf.scheme || "turf";
@@ -659,7 +674,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     catch (e) { showMsg("adminMsg", e.message, "err"); return false; }
   }
 
-  ["cTitle", "cTop", "cSide", "cPrice", "cHold", "cVenmo", "cPaypal", "pQ1", "pQ2", "pQ3", "pF"].forEach((id) => $(id).addEventListener("input", () => (S.cfgDirty = true)));
+  ["cTitle", "cTop", "cSide", "cPrice", "cHold", "cVenmo", "cPaypal", "pQ1", "pQ2", "pQ3", "pF", "cMax", "cContact", "cRules"].forEach((id) => $(id).addEventListener("input", () => (S.cfgDirty = true)));
   $("saveCfg").onclick = async () => {
     const payouts = { q1: Number($("pQ1").value) || 0, q2: Number($("pQ2").value) || 0, q3: Number($("pQ3").value) || 0, final: Number($("pF").value) || 0 };
     const sum = payouts.q1 + payouts.q2 + payouts.q3 + payouts.final;
@@ -672,6 +687,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       title: $("cTitle").value.trim(), teamTop: $("cTop").value.trim(), teamSide: $("cSide").value.trim(),
       price: Number($("cPrice").value), holdMinutes: Number($("cHold").value), venmo, paypal, payouts,
       scheme: S.previewScheme || S.st.cfg.scheme || "turf",
+      maxPerPlayer: Number($("cMax").value || 0), contactEmail: $("cContact").value.trim(),
+      rules: $("cRules").value.split("\n").map((r) => r.replace(/^\s*[-*•⁃]+\s*/, "").trim()).filter(Boolean),
     }), "Settings saved.");
     if (ok) { S.cfgDirty = false; S.previewScheme = null; renderAll(); }
   };
@@ -749,6 +766,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   function renderInvites() {
     const sec = $("invSection");
     sec.hidden = !(B.invites && S.st.admin); if (sec.hidden) return;
+    renderRequests();
     const list = (S.st.invites || []).slice().sort((a, b) => a.name.localeCompare(b.name));
     const L = $("invList"); L.replaceChildren();
     if (!list.length) L.append(el("div", "note", "No invitations yet. Add a name and email above."));
@@ -830,6 +848,98 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (await invDo(() => B.adminAssign(id, cells), "Assigned " + cells.length + " square" + (cells.length > 1 ? "s" : "") + " to " + (who ? who.name : "player") + ".")) { S.selected.clear(); renderAll(); }
   };
 
+  // ---------- header banner ----------
+  function placeHero() {
+    const hero = $("heroText"), banner = $("banner");
+    const wide = !banner.hidden && window.innerWidth >= 760;
+    if (wide && hero.parentElement !== banner) banner.append(hero);
+    else if (!wide && hero.parentElement === banner) $("band").querySelector(".wrap").prepend(hero);
+  }
+  window.addEventListener("resize", placeHero);
+
+  // ---------- rules ----------
+  const DEFAULT_MAX = 8;
+  const DEFAULT_RULES = [
+    "Maximum of 8 squares per player",
+    "Squares are not owned until paid",
+    "Payments accepted via Venmo or PayPal",
+    "Numbers are randomized on Super Bowl Sunday",
+    "Winnings paid within 24 hours of the end of the game",
+    "If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted",
+  ];
+  const rulesOf = (cf) => (Array.isArray(cf.rules) ? cf.rules : DEFAULT_RULES);
+  const maxOf = (cf) => (cf.maxPerPlayer == null ? DEFAULT_MAX : Number(cf.maxPerPlayer) || 0);
+  function renderRules() {
+    const rules = rulesOf(S.st.cfg), ul = $("rulesList");
+    $("rulesPanel").hidden = !rules.length;
+    ul.replaceChildren(...rules.map((r) => el("li", null, r)));
+    // remaining-squares hint for invited players
+    let note = $("limitNote");
+    if (!note) { note = el("p", "limit-note"); note.id = "limitNote"; $("holdNote").before(note); }
+    const max = maxOf(S.st.cfg), me = S.st.me;
+    if (inviteMode() && me && !me.revoked && max && !S.st.cfg.locked) {
+      const held = Object.values(live()).filter((s) => s.mine).length, left = Math.max(0, max - held);
+      note.textContent = left ? "You can hold up to " + max + " squares. " + left + " left to pick." : "You have the maximum of " + max + " squares.";
+      note.hidden = false;
+    } else note.hidden = true;
+  }
+
+  // ---------- request an invitation ----------
+  function renderReqButton() {
+    const show = !!(B.requestInvite && inviteMode() && !S.st.me && !S.st.admin);
+    $("reqWrap").hidden = !show;
+  }
+  function openReq() {
+    $("reqModal").hidden = false; $("reqForm").hidden = false; $("reqDone").hidden = true; hide("rqMsgBox");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => $("rqName").focus(), 30);
+  }
+  function closeReq() { $("reqModal").hidden = true; document.body.style.overflow = ""; $("reqBtn").focus(); }
+  $("reqBtn").onclick = openReq;
+  $("reqClose").onclick = closeReq;
+  $("reqDoneClose").onclick = closeReq;
+  $("reqModal").addEventListener("click", (e) => { if (e.target === $("reqModal")) closeReq(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("reqModal").hidden) closeReq(); });
+  $("reqForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = $("rqName").value.trim(), email = $("rqEmail").value.trim(), message = $("rqMsg").value.trim();
+    if (!name) return showMsg("rqMsgBox", "Add your name.", "err");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMsg("rqMsgBox", "That email address doesn't look right.", "err");
+    const btn = $("rqSend"); btn.disabled = true; btn.textContent = "Sending…";
+    try {
+      await B.requestInvite({ name, email, message, website: $("rqWebsite").value });
+      $("reqForm").hidden = true; $("reqDone").hidden = false; $("rqMsg").value = "";
+      $("reqDoneClose").focus();
+    } catch (err) { showMsg("rqMsgBox", err.message, "err"); }
+    btn.disabled = false; btn.textContent = "Send request";
+  });
+
+  // commissioner: list of requests
+  function renderRequests() {
+    const box = $("reqSection"), reqs = S.st.requests;
+    box.hidden = !Array.isArray(reqs); if (box.hidden) return;
+    $("reqCount").textContent = reqs.length || "";
+    const L = $("reqList"); L.replaceChildren();
+    if (!reqs.length) L.append(el("div", "note", "No requests right now. When someone taps Request an Invitation, they'll show up here."));
+    for (const r of reqs) {
+      const row = el("div", "req-row"), top = el("div", "rq-top");
+      top.append(el("span", "rq-name", r.name), el("span", "rq-when", fmtDate(r.at)));
+      row.append(top, el("div", "rq-email", r.email));
+      if (r.message) row.append(el("div", "rq-msg", r.message));
+      const acts = el("div", "acts");
+      const inv = el("button", "tog on", "Invite"); inv.type = "button";
+      inv.title = "Add an invitation for " + r.name + " (send it from the list below)";
+      inv.onclick = () => invDo(async () => { await B.createInvite({ name: r.name.slice(0, 24), email: r.email }); await B.dismissRequest(r.id); },
+        "Invitation for " + r.name + " added. Send it from the Invitations list below.");
+      const dis = el("button", "tog", "Dismiss"); dis.type = "button";
+      dis.onclick = () => invDo(() => B.dismissRequest(r.id), "Request dismissed.");
+      acts.append(inv, dis); row.append(acts); L.append(row);
+    }
+    const n = $("reqNote");
+    n.hidden = S.st.contactSet !== false;
+    n.textContent = "Requests also go to your email once you set \"Send invitation requests to\" in the settings above.";
+  }
+
   // ---------- messages ----------
   function showMsg(id, text, kind) { const m = $(id); m.textContent = text; m.className = "msg" + (kind ? " " + kind : ""); m.hidden = false; }
   function hide(id) { $(id).hidden = true; }
@@ -839,7 +949,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (!S.st) return;
     if (sheetId) renderSheet();
     for (const id of [...S.selected]) if (live()[id]) S.selected.delete(id);
-    renderHeader(); renderTabs(); renderBoard(); renderClaim(); renderPicker(); renderMine(); renderPayouts(); renderAdmin();
+    renderHeader(); renderTabs(); renderBoard(); renderClaim(); renderPicker(); renderMine(); renderPayouts(); renderAdmin(); renderRules(); renderReqButton();
   }
   buildPicker(); buildThemes(); renderPicker(); renderTabs();
   B.start((st, problem) => {

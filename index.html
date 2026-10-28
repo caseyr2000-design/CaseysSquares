@@ -188,6 +188,48 @@ table.pay tr:last-child td{border-bottom:0}
 .offline{background:var(--amber-soft);color:var(--ink);font-size:13.5px}
 .offline .wrap{padding-block:10px}
 
+/* header banner image with the title laid over it */
+.banner{position:relative;margin:0 auto;max-width:1680px;line-height:0;background:#0d2a26}
+.banner img{display:block;width:100%;height:auto;max-height:470px;object-fit:cover;object-position:center}
+.banner .hero-text{position:absolute;left:34%;right:33%;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;line-height:1.45;color:#fff;padding:12px}
+.banner .hero-text::before{content:"";position:absolute;inset:8% -4%;background:radial-gradient(closest-side,rgba(0,0,0,.55),rgba(0,0,0,0));z-index:-1}
+.banner .hero-text .eyebrow{color:#e3e8e6}
+.banner .hero-text h1{font-size:clamp(22px,2.7vw,46px);text-shadow:0 2px 16px rgba(0,0,0,.6);color:#fff}
+.banner .hero-text .matchup{justify-content:center;color:#f5c451;font-size:clamp(15px,1.5vw,24px);text-shadow:0 1px 10px rgba(0,0,0,.6)}
+.banner .hero-text .matchup .vs{color:#dfe5e3}
+.banner .hero-text .logo{width:clamp(26px,2.4vw,40px);height:clamp(26px,2.4vw,40px)}
+header.band.has-banner{background-image:none}
+header.band.has-banner::before{display:none}
+header.band.has-banner .wrap{padding-block:14px 14px}
+header.band.has-banner .stats{margin-left:auto}
+
+/* request an invitation */
+.reqwrap{padding-block:14px 0}
+.reqbtn{display:block;width:100%;min-height:54px;border:0;border-radius:10px;background:#f5c451;color:#1d1a10;font-family:var(--f-display);font-weight:800;font-size:clamp(18px,2.2vw,24px);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 2px 0 #c99a1e}
+.reqbtn:hover{background:#ffd264}
+.reqbtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.modal{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.modal-card{position:relative;width:100%;max-width:460px;background:var(--surface);color:var(--ink);border-radius:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal-card h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:22px;margin:0 0 8px;padding-right:36px}
+.modal-card textarea,#cRules{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.reqsend{background:#f5c451;color:#1d1a10}
+.req-done{font-size:15px}
+.hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0}
+.req-row{display:grid;gap:4px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.req-row .rq-top{display:flex;justify-content:space-between;gap:8px;min-width:0}
+.req-row .rq-name{font-weight:600;overflow-wrap:anywhere}
+.req-row .rq-when{color:var(--muted);font-size:11.5px;white-space:nowrap}
+.req-row .rq-email{color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
+.req-row .rq-msg{font-size:13px;background:var(--bg);border-radius:6px;padding:6px 8px;overflow-wrap:anywhere}
+.req-row .acts{display:flex;gap:6px;flex-wrap:wrap}
+.lbl .count{display:inline-block;min-width:20px;padding:1px 6px;border-radius:999px;background:#f5c451;color:#1d1a10;text-align:center;letter-spacing:0}
+.lbl .count:empty{display:none}
+
+/* rules */
+.rules-list{margin:0;padding-left:20px;display:grid;gap:7px;font-size:14.5px}
+.rules-list li::marker{color:var(--amber)}
+.limit-note{font-size:13px;color:var(--muted);margin-top:8px}
+
 /* invitations */
 .gate{display:grid;gap:4px;padding:12px;border-radius:8px;background:var(--amber-soft);font-size:14px;margin-bottom:6px}
 .gate b{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:16px}
@@ -319,8 +361,9 @@ body.has-bar main.wrap{padding-bottom:110px}
 <body>
 <div class="offline" id="offline" hidden><div class="wrap" id="offlineTxt">Can't reach the board right now. Retrying…</div></div>
 <header class="band" id="band">
+  <div class="banner" id="banner" hidden><img id="bannerImg" alt="" decoding="async"></div>
   <div class="wrap">
-    <div style="min-width:0">
+    <div class="hero-text" id="heroText">
       <div class="eyebrow">Football squares pool · <span id="statusPill" class="status">Board open</span></div>
       <h1 id="title">Sunday Night Squares</h1>
       <div class="matchup" id="matchup"></div>
@@ -332,6 +375,10 @@ body.has-bar main.wrap{padding-bottom:110px}
     </div>
   </div>
 </header>
+
+<div class="wrap reqwrap" id="reqWrap" hidden>
+  <button class="reqbtn" id="reqBtn" type="button">Request an Invitation</button>
+</div>
 
 <main class="wrap">
   <section class="board-col">
@@ -360,7 +407,7 @@ body.has-bar main.wrap{padding-bottom:110px}
       <h2>Pick your squares</h2>
       <div id="inviteGate" class="gate" hidden>
         <b>Invitation required</b>
-        <span>Only invited players can pick squares. Open the personal link from your invitation email, or ask the commissioner for one.</span>
+        <span>Only invited players can pick squares. Open the personal link from your invitation email, or tap <b>Request an Invitation</b> to ask the commissioner for one.</span>
       </div>
       <div id="whoBox" class="whobox" hidden><span>Playing as</span><b id="whoName"></b></div>
       <div id="nameBox">
@@ -380,6 +427,11 @@ body.has-bar main.wrap{padding-bottom:110px}
       <button class="btn" id="claimBtn" disabled>Select squares on the board</button>
       <div id="claimMsg" class="msg" hidden></div>
       <p class="note" id="holdNote"></p>
+    </div>
+
+    <div class="panel rules" id="rulesPanel">
+      <h2>Rules</h2>
+      <ul class="rules-list" id="rulesList"></ul>
     </div>
 
     <div class="panel" id="myPanel" hidden>
@@ -425,12 +477,23 @@ body.has-bar main.wrap{padding-bottom:110px}
       </div>
       <span class="lbl" id="themeLbl">Site colors</span>
       <div class="themes" id="themePick" role="group" aria-labelledby="themeLbl"></div>
+      <div class="row2">
+        <div><label for="cMax">Max squares per player</label><input id="cMax" type="number" min="0" max="100" step="1"></div>
+        <div><label for="cContact">Send invitation requests to</label><input id="cContact" type="email" maxlength="120" placeholder="you@gmail.com"></div>
+      </div>
+      <label for="cRules">Rules (one per line)</label>
+      <textarea id="cRules" rows="7" maxlength="3000"></textarea>
       <button class="btn" id="saveCfg" type="button">Save settings</button>
 
       <span class="lbl" style="margin-top:18px">Logos and header photo</span>
       <div class="imgs" id="imgs"></div>
 
       <section id="invSection" hidden>
+        <div id="reqSection" hidden>
+          <span class="lbl" style="margin-top:18px">Invitation requests <span class="count" id="reqCount"></span></span>
+          <div class="ledger req-list" id="reqList"></div>
+          <p class="note" id="reqNote" hidden></p>
+        </div>
         <span class="lbl" style="margin-top:18px">Invitations</span>
         <p class="note" style="margin-top:0">Only people with an invitation link can pick squares. The name you enter here is the name on their squares, and only you can change it.</p>
         <form id="invForm" class="row2" autocomplete="off">
@@ -473,6 +536,26 @@ body.has-bar main.wrap{padding-bottom:110px}
   </aside>
 </main>
 <footer class="wrap" id="footer" hidden style="padding-block:0 32px;font-size:13px"><button class="linkbtn" id="showLogin" type="button" style="color:var(--muted)">Commissioner login</button></footer>
+
+<div class="modal" id="reqModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reqTitle">
+    <button class="sheet-x" id="reqClose" type="button" aria-label="Close">×</button>
+    <h2 id="reqTitle">Request an Invitation</h2>
+    <form id="reqForm" autocomplete="on">
+      <p class="note" style="margin-top:0">Send the commissioner a note. If there's room, you'll get an email with your personal link to pick squares.</p>
+      <label for="rqName">Your name</label><input id="rqName" type="text" maxlength="40" autocomplete="name" required>
+      <label for="rqEmail">Your email</label><input id="rqEmail" type="email" maxlength="120" autocomplete="email" required>
+      <label for="rqMsg">Message (optional)</label><textarea id="rqMsg" rows="4" maxlength="600" placeholder="Hi Casey, can I get in on the squares?"></textarea>
+      <input id="rqWebsite" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
+      <button class="btn reqsend" id="rqSend" type="submit">Send request</button>
+      <div id="rqMsgBox" class="msg" hidden></div>
+    </form>
+    <div id="reqDone" hidden>
+      <p class="req-done"><b>Request sent.</b> The commissioner will email you a personal link to play.</p>
+      <button class="btn ghost" id="reqDoneClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
 
 <div class="claimbar" id="claimBar" hidden role="region" aria-label="Selected squares">
   <div class="cb-info"><b id="barCount">0 squares</b><span id="barTotal">$0</span></div>

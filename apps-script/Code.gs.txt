@@ -20,7 +20,16 @@ var CELL_RE = /^r[0-9]c[0-9]$/;
 var DEFAULT_CFG = {
   title: 'Sunday Night Squares', teamTop: 'Home', teamSide: 'Away', price: 10, holdMinutes: 60,
   venmo: '', paypal: '', payouts: { q1: 20, q2: 25, q3: 20, final: 35 },
-  locked: false, nums: null, scores: {}, images: {}, scheme: 'turf'
+  locked: false, nums: null, scores: {}, images: {}, scheme: 'turf',
+  maxPerPlayer: 8, contactEmail: '',
+  rules: [
+    'Maximum of 8 squares per player',
+    'Squares are not owned until paid',
+    'Payments accepted via Venmo or PayPal',
+    'Numbers are randomized on Super Bowl Sunday',
+    'Winnings paid within 24 hours of the end of the game',
+    'If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted'
+  ]
 };
 
 function doGet() {
@@ -39,7 +48,7 @@ function doPost(e) {
     login: login, logout: logout, saveSettings: saveSettings, setPaid: setPaid, adminRelease: adminRelease,
     draw: draw, reset: reset, saveScores: saveScores, uploadImage: uploadImage, removeImage: removeImage,
     createInvite: createInvite, updateInvite: updateInvite, sendInvite: sendInvite, adminAssign: adminAssign,
-    exportLedger: exportLedger
+    exportLedger: exportLedger, requestInvite: requestInvite, dismissRequest: dismissRequest
   };
   var out;
   try {
@@ -156,6 +165,10 @@ function getState(playerToken, adminToken) {
       return { id: v.id, token: v.token, name: v.name, email: v.email, font: v.font, color: v.color,
         createdAt: v.createdAt, sentAt: v.sentAt || null, revoked: !!v.revoked, squares: c.squares, paid: c.paid };
     });
+    res.requests = [];
+    for (var k in all) if (k.indexOf('req:') === 0) res.requests.push(JSON.parse(all[k]));
+    res.requests.sort(function (a, b) { return a.at - b.at; });
+    res.contactSet = !!(props_().getProperty('COMMISSIONER_EMAIL') || cfg.contactEmail);
   }
   return res;
 }
@@ -186,6 +199,13 @@ function claim(playerToken, p) {
     var me = inviteByToken_(playerToken, props_().getProperties());
     if (!me) fail_('You need an invitation link to pick squares. Ask the commissioner for one.');
     if (me.revoked) fail_('Your invitation has been turned off. Contact the commissioner.');
+    var all = props_().getProperties(), cfg = getCfg_(all), sq = squares_(all), held = 0, cutoff = Date.now() - cfg.holdMinutes * 60000;
+    for (var id in sq) if (sq[id].iid === me.id && (sq[id].paid || cfg.locked || sq[id].claimedAt >= cutoff)) held++;
+    var max = Number(cfg.maxPerPlayer) || 0;
+    if (max && held + cells.length > max) {
+      var left = Math.max(0, max - held);
+      fail_(left ? 'The limit is ' + max + ' squares per player. You can pick ' + left + ' more.' : 'You already have the maximum of ' + max + ' squares.');
+    }
     return claimFor_(me.id, cells);
   });
 }
@@ -261,6 +281,19 @@ function saveSettings(adminToken, b) {
     cfg.teamSide = clean_(b.teamSide, 20) || 'Away';
     cfg.price = Math.round(price * 100) / 100; cfg.holdMinutes = hold;
     cfg.venmo = venmo; cfg.paypal = paypal; cfg.payouts = payouts; cfg.scheme = scheme;
+    if (b.maxPerPlayer != null) {
+      var mx = Math.round(Number(b.maxPerPlayer));
+      if (!(mx >= 0 && mx <= 100)) fail_('Max squares per player must be between 0 (no limit) and 100.');
+      cfg.maxPerPlayer = mx;
+    }
+    if (b.contactEmail != null) {
+      var ce = clean_(b.contactEmail, 120);
+      if (ce && !validEmail_(ce)) fail_("The email for invitation requests doesn't look right.");
+      cfg.contactEmail = ce;
+    }
+    if (Array.isArray(b.rules)) {
+      cfg.rules = b.rules.map(function (r) { return clean_(r, 200); }).filter(function (r) { return r; }).slice(0, 15);
+    }
     saveCfg_(cfg);
     return true;
   });
@@ -419,6 +452,48 @@ function adminAssign(adminToken, id, cells) {
     if (r.lost.length) fail_(r.won.length + ' assigned; ' + r.lost.length + ' were already taken.');
     return r;
   });
+}
+
+// ---------- invitation requests (anyone can ask; the commissioner decides) ----------
+// The request is saved for the Commissioner panel and emailed to the commissioner, with Reply-To set to the
+// person asking so a plain reply reaches them. Sent to the COMMISSIONER_EMAIL script property, or the
+// "Send invitation requests to" setting.
+function requestInvite(p) {
+  p = p || {};
+  if (p.website) return true; // hidden form field only bots fill in
+  var name = clean_(p.name, 40), email = clean_(p.email, 120), msg = clean_(p.message, 600);
+  if (!name) fail_('Add your name.');
+  if (!validEmail_(email)) fail_("That email address doesn't look right.");
+  var cache = CacheService.getScriptCache(), n = Number(cache.get('reqs') || 0);
+  if (n >= 20) fail_('Lots of requests right now. Please try again in an hour.');
+  cache.put('reqs', String(n + 1), 3600);
+  var cfg = getCfg_(), to = props_().getProperty('COMMISSIONER_EMAIL') || cfg.contactEmail, id;
+  withLock_(function () {
+    var all = props_().getProperties(), count = 0;
+    for (var k in all) if (k.indexOf('req:') === 0) {
+      count++;
+      if (JSON.parse(all[k]).email.toLowerCase() === email.toLowerCase()) fail_('You already asked. The commissioner will email you a link.');
+    }
+    if (count >= 60) fail_('The commissioner has a lot of requests waiting. Please try again later.');
+    id = Number(all['nextRid'] || 1);
+    var w = {}; w['nextRid'] = String(id + 1);
+    w['req:' + id] = JSON.stringify({ id: id, name: name, email: email, message: msg, at: Date.now() });
+    props_().setProperties(w);
+  });
+  if (to && MailApp.getRemainingDailyQuota() > 0) {
+    GmailApp.sendEmail(to, 'Invitation request: ' + name + ' wants to join ' + cfg.title,
+      name + ' (' + email + ') asked for an invitation to ' + cfg.title + '.\n\n' +
+      (msg ? 'Their message:\n' + msg + '\n\n' : '') +
+      'To invite them, open your board, log in as commissioner, and click Invite next to their request. ' +
+      'Or just reply to this email.', { replyTo: email, name: cfg.title });
+  }
+  return true;
+}
+
+function dismissRequest(adminToken, id) {
+  requireAdmin_(adminToken);
+  props_().deleteProperty('req:' + Number(id));
+  return true;
 }
 
 // Writes the payment ledger to a new Google Sheet in your Drive and returns its link.
