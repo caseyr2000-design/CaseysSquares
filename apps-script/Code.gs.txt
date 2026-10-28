@@ -25,7 +25,7 @@ var EMOJIS = ['🏈', '🏆', '🔥', '⚡', '🍀', '💰', '👑', '🎯', '�
 var CELL_RE = /^r[0-9]c[0-9]$/;
 var DEFAULT_CFG = {
   title: 'Sunday Night Squares', teamTop: 'Home', teamSide: 'Away', price: 10, holdMinutes: 60,
-  venmo: '', paypal: '', payouts: { q1: 20, q2: 25, q3: 20, final: 35 },
+  venmo: 'Casey-Ramsay', paypal: 'CaseyRamsay', payouts: { q1: 20, q2: 25, q3: 20, final: 35 },
   locked: false, nums: null, scores: {}, images: {}, scheme: 'turf',
   maxPerPlayer: 8, contactEmail: '',
   rules: [
@@ -81,6 +81,9 @@ function getCfg_(all) {
   for (var k in saved) cfg[k] = saved[k];
   cfg.payouts = Object.assign({}, DEFAULT_CFG.payouts, cfg.payouts || {});
   cfg.images = cfg.images || {};
+  // Payment accounts fall back to Casey's Venmo / PayPal when none are saved.
+  if (!cfg.venmo) cfg.venmo = DEFAULT_CFG.venmo;
+  if (!cfg.paypal) cfg.paypal = DEFAULT_CFG.paypal;
   // Rules saved from an earlier default list (and never edited) follow the current default list.
   if (Array.isArray(cfg.rules)) {
     var oldDefault = DEFAULT_CFG.rules.filter(function (r) { return r !== 'Numbers Are Randomized for Each Quarter' && r !== 'Have Fun & Good Luck'; });
