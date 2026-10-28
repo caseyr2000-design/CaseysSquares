@@ -84,6 +84,9 @@ window.SquaresBackend = (function () {
     saveScores: (scores) => act("saveScores", adm(), scores),
     async uploadImage(slot, blob) { return act("uploadImage", adm(), slot, await toBase64(blob), blob.type); },
     removeImage: (slot) => act("removeImage", adm(), slot),
+    getPage: (name) => run("getPage", name),
+    savePage: (name, data, rev) => run("savePage", adm(), name, data, rev),
+    refresh: () => refresh(),
     createInvite: (b) => act("createInvite", adm(), b),
     updateInvite: (id, b) => act("updateInvite", adm(), id, b),
     sendInvite: (id, subject, body) => act("sendInvite", adm(), id, subject, body),
@@ -252,7 +255,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
         btn.type = "button"; btn.dataset.id = id;
         if (sq) {
           btn.classList.add("taken", sq.paid ? "paid" : "unpaid"); if (sq.mine) btn.classList.add("mine");
-          const n = el("span", "nm ff-" + (sq.font || "clean")), np = nameParts(sq.name);
+          const n = el("span", "nm ff-" + (sq.font || "clean") + (sq.reserved ? " reserved" : "")), np = sq.reserved ? { short: "Reserved", init: "•••" } : nameParts(sq.name);
           n.append(el("span", "n-full", sq.name), el("span", "n-short", np.short), el("span", "n-init", np.init));
           if (sq.color && sq.color !== "ink") n.style.setProperty("--pc", "var(--pc-" + sq.color + ")");
           const label = sq.paid ? "PAID" : (sq.mine && sq.expiresAt ? minsLeft(sq) + "m left" : "UNPAID");
@@ -883,11 +886,14 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (wide && hero.parentElement !== banner) banner.append(hero);
     else if (!wide && hero.parentElement === banner) $("band").querySelector(".wrap").prepend(hero);
     // In the left-title layout, the price/squares/pot figures fill the matching space on the right.
-    const stats = $("band").querySelector(".stats"), wrap = $("band").querySelector(".wrap");
-    const statsIn = left && wide;
+    // Otherwise they sit small in the banner's bottom-right corner, lined up with the picture's right edge.
+    const stats = $("band").querySelector(".stats");
+    const leftStats = left && wide, corner = !left && !banner.hidden, statsIn = leftStats || corner;
     if (statsIn && stats.parentElement !== banner) banner.append(stats);
-    else if (!statsIn && stats.parentElement === banner) wrap.append(stats);
-    $("band").classList.toggle("stats-in-banner", statsIn);
+    else if (!statsIn && stats.parentElement === banner) hero.append(stats);
+    banner.classList.toggle("stats-corner", corner);
+    if (corner) { const bw = banner.getBoundingClientRect(), iw = img.getBoundingClientRect(); banner.style.setProperty("--ir", Math.max(0, Math.round(bw.right - iw.right)) + "px"); }
+    $("band").classList.toggle("stats-in-banner", leftStats);
     $("band").classList.toggle("hero-in-banner", hero.parentElement === banner);
   }
   window.addEventListener("resize", placeHero);

@@ -446,9 +446,66 @@ body.has-bar main.wrap{padding-bottom:110px}
   .big-top .seg button,.big-top .tool{min-height:32px;padding:4px 9px;font-size:12.5px}
   .big-body{place-items:start center}
 }
+
+/* price / squares left / pot as small "superscript" figures in the banner's bottom-right corner */
+header.band .banner.stats-corner > .stats{position:absolute;right:calc(var(--ir,0px) + clamp(8px,1.3vw,22px));bottom:clamp(6px,1vw,16px);left:auto;top:auto;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;gap:2px clamp(8px,1.1vw,18px);width:auto;max-width:calc(100% - 16px);margin:0;padding:clamp(3px,.4vw,6px) clamp(7px,.8vw,12px);line-height:1.15;border-radius:7px;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+header.band .banner.stats-corner > .stats .stat{display:flex;align-items:baseline;gap:4px;text-align:right;white-space:nowrap}
+header.band .banner.stats-corner > .stats .stat b{font-size:clamp(11px,1.05vw,18px);color:#f5c451;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+header.band .banner.stats-corner > .stats .stat small{font-size:clamp(8px,.62vw,11px);letter-spacing:.08em;color:#e8eeec;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+/* unpaid squares belonging to someone else */
+.cell .nm.reserved{font-style:italic;font-weight:500;color:var(--muted)}
+
+/* commissioner row tools on the extra pages */
+.row-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row-acts .tog{margin:0;text-transform:none;letter-spacing:0;font-size:12.5px;min-width:34px;min-height:32px}
+.row-acts .tog[disabled]{opacity:.35;cursor:default}
+.row-acts .tog.danger{color:var(--danger)}
+.row-acts .tog.armed{background:var(--danger);color:#fff;border-color:transparent}
+figure.slot .row-acts{border-top:1px dashed var(--line);padding-top:8px}
+.add-row{display:inline-flex;width:auto;margin-top:14px;padding:9px 16px}
+.page-status{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:8px;font-size:14px;box-shadow:0 8px 26px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.page-status.err{background:var(--danger);color:#fff}
+table.yw td.acts{width:1%;white-space:nowrap}
+table.yw td.acts .row-acts{flex-wrap:nowrap}
+.rowform .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.rowform .btns{display:flex;gap:10px;margin-top:16px}
+.rowform .btns .btn{margin-top:0}
+.rowform .btns .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.modal-card.wide{max-width:560px}
+.empty-list{padding:18px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;background:var(--surface)}
+
+/* Hall of Fame leaderboards */
+.hof-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:26px;align-items:start}
+.lb-wrap{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+table.lb{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+table.lb th{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-align:left;background:var(--board-bg);color:var(--board-ink);padding:10px 12px}
+table.lb td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:middle}
+table.lb tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 60%,transparent)}
+table.lb .rk{width:44px;font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--muted)}
+table.lb tr:nth-child(-n+3) .rk{color:#c99a1e}
+table.lb .nm{font-weight:600;overflow-wrap:anywhere}
+table.lb .num{text-align:right;font-family:var(--f-mono);font-weight:700;white-space:nowrap}
+table.lb th.num{text-align:right}
+table.lb td.acts{width:1%;white-space:nowrap}
+table.lb td.acts .row-acts{flex-wrap:nowrap;gap:4px}
+table.lb td.acts .tog{min-height:30px;padding:4px 8px}
+@media (max-width:760px){
+  table.yw td.acts{display:block;width:100%}
+  table.yw td.acts::before{content:none}
+  table.yw td.acts .row-acts{flex-wrap:wrap}
+  table.lb td,table.lb th{padding:8px 9px}
+  table.lb td.acts .row-acts{flex-wrap:wrap;justify-content:flex-end}
+}
+@media (max-width:600px){
+  header.band .banner.stats-corner > .stats{flex-direction:column;align-items:flex-end;gap:0;right:calc(var(--ir,0px) + 6px);bottom:5px;padding:3px 7px;border-radius:6px}
+  header.band .banner.stats-corner > .stats .stat{justify-content:flex-end}
+  header.band .banner.stats-corner > .stats .stat b{font-size:11px}
+  header.band .banner.stats-corner > .stats .stat small{font-size:7.5px;letter-spacing:.06em}
+}
 </style>
 </head>
-<body>
+<body data-page="yw">
 <div class="offline" id="offline" hidden><div class="wrap" id="offlineTxt">Can't reach the board right now. Retrying…</div></div>
 <header class="band" id="band">
   <div class="banner" id="banner" hidden><img id="bannerImg" alt="" decoding="async"></div>
@@ -467,12 +524,14 @@ body.has-bar main.wrap{padding-bottom:110px}
   <nav class="sitenav" aria-label="Site"><a href="index.html">Home</a><a href="odds.html">Odds</a><a href="hot-squares.html">Hot Squares</a><a href="yearly-winners.html" aria-current="page">Yearly Winners</a><a href="hall-of-fame.html">Hall of Fame</a></nav>
 </header>
 <main class="wrap page">
-<div class="admin-on" id="adminOn" hidden>You're logged in as commissioner. Use the buttons under each picture to upload, replace or remove it.</div>
-<div class="page-head"><h2>Yearly Winners</h2><p>Q1 / Q2 / Q3 / Final Score</p></div><div class="yw-wrap"><table class="yw"><thead><tr><th>Date</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Final Score</th><th>Photo</th></tr></thead><tbody><tr><td class="when" data-h="Date"><b>2016</b><small>Super Bowl 50 · February 7, 2016</small></td><td data-h="Q1"><span class="who">Patrick Ballas<span class="amt">$100</span></span></td><td data-h="Q2"><span class="who">Casey Ramsay<span class="amt">$100</span></span></td><td data-h="Q3"><span class="who">Seth Bregman<span class="amt">$100</span></span></td><td data-h="Final Score"><span class="who">Sam Schell &amp; Casey Bates<span class="amt">$200</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2016" data-label="2016 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2017</b><small>Super Bowl LI · February 5, 2017</small></td><td data-h="Q1"><span class="who">Paul Levin<span class="amt">$100</span></span></td><td data-h="Q2"><span class="who">Lenny Brown<span class="amt">$100</span></span></td><td data-h="Q3"><span class="who">Hien Doan<span class="amt">$100</span></span></td><td data-h="Final Score"><span class="who">Gerald Pitts<span class="amt">$200</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2017" data-label="2017 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2018</b><small>Super Bowl LII · February 4, 2018</small></td><td data-h="Q1"><span class="who">Darrell Pitts<span class="amt">$100</span></span></td><td data-h="Q2"><span class="who">John Pak<span class="amt">$100</span></span></td><td data-h="Q3"><span class="who">Nam<span class="amt">$100</span></span></td><td data-h="Final Score"><span class="who">Brian Montañez<span class="amt">$200</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2018" data-label="2018 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2019</b><small>Super Bowl LIII · February 3, 2019</small></td><td data-h="Q1"><span class="who">Victoria Morales<span class="amt">$100</span></span></td><td data-h="Q2"><span class="who">Casey Ramsay<span class="amt">$100</span></span></td><td data-h="Q3"><span class="who">Gerald Pitts<span class="amt">$100</span></span></td><td data-h="Final Score"><span class="who">Gerald Pitts<span class="amt">$200</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2019" data-label="2019 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2020</b><small>Super Bowl LIV · February 2, 2020</small></td><td data-h="Q1"><span class="who">John Pak<span class="amt">$100</span></span></td><td data-h="Q2"><span class="who">John Pak<span class="amt">$100</span></span></td><td data-h="Q3"><span class="who">Pham<span class="amt">$100</span></span></td><td data-h="Final Score"><span class="who">Samantha Schell<span class="amt">$200</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2020" data-label="2020 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2021</b><small>Super Bowl LV · February 7, 2021</small></td><td data-h="Q1"><span class="who">Marion Watson<span class="amt">$200</span></span></td><td data-h="Q2"><span class="who">John Pak<span class="amt">$200</span></span></td><td data-h="Q3"><span class="who">Daphne Woolfolk<span class="amt">$200</span></span></td><td data-h="Final Score"><span class="who">John Pak<span class="amt">$400</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2021" data-label="2021 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2022</b><small>Super Bowl LVI · February 13, 2022</small></td><td data-h="Q1"><span class="who">Darrell Pitts<span class="amt">$200</span></span></td><td data-h="Q2"><span class="who">Mitch Rice<span class="amt">$200</span></span></td><td data-h="Q3"><span class="who">John Pak<span class="amt">$200</span></span></td><td data-h="Final Score"><span class="who">Casey Ramsay<span class="amt">$400</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2022" data-label="2022 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2023</b><small>Super Bowl LVII · February 12, 2023</small></td><td data-h="Q1"><span class="who">Ruby Urabe<span class="amt">$200</span></span></td><td data-h="Q2"><span class="who">Alex Winston<span class="amt">$200</span></span></td><td data-h="Q3"><span class="who">Courtney Maynard<span class="amt">$200</span></span></td><td data-h="Final Score"><span class="who">Darrell Pitts<span class="amt">$400</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2023" data-label="2023 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2024</b><small>Super Bowl LVIII · February 11, 2024</small></td><td data-h="Q1"><span class="who">Mitch Rice<span class="amt">$300</span></span></td><td data-h="Q2"><span class="who">Justin Garcia<span class="amt">$300</span></span></td><td data-h="Q3"><span class="who">Oliver Bundalian<span class="amt">$300</span></span></td><td data-h="Final Score"><span class="who">Taryn Grows<span class="amt">$600</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2024" data-label="2024 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2025</b><small>Super Bowl LIX · February 9, 2025</small></td><td data-h="Q1"><span class="who">Hector<span class="amt">$300</span></span></td><td data-h="Q2"><span class="who">Courtney<span class="amt">$300</span></span></td><td data-h="Q3"><span class="who">Courtney<span class="amt">$300</span></span></td><td data-h="Final Score"><span class="who">Dean<span class="amt">$600</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2025" data-label="2025 photo"></figure></td></tr><tr><td class="when" data-h="Date"><b>2026</b><small>Super Bowl LX · February 8, 2026</small></td><td data-h="Q1"><span class="who">Kristen &amp; Ziggy<span class="amt">$300</span></span></td><td data-h="Q2"><span class="who">Dean<span class="amt">$300</span></span></td><td data-h="Q3"><span class="who">Oliver<span class="amt">$300</span></span></td><td data-h="Final Score"><span class="who">Courtney<span class="amt">$550</span></span></td><td class="pic" data-h="Photo"><figure class="slot" data-slot="yw-2026" data-label="2026 photo"></figure></td></tr></tbody></table></div>
-<p class="admin-note" id="adminHint">Commissioner? <a href="index.html#login">Log in on the Home page</a> to upload pictures here.</p>
+<div class="admin-on" id="adminOn" hidden>You're logged in as commissioner. Use ↑ ↓ to move rows, Edit and Delete to change them, “+ Add” for new rows, and the picture buttons to upload or remove pictures.</div>
+<div class="page-head"><h2>Yearly Winners</h2><p>Q1 / Q2 / Q3 / Final Score</p></div>
+<div id="pageBody"></div>
+<script type="application/json" id="pageDefault">{"rows": [{"id": "yw-2016", "year": "2016", "sb": "50", "date": "February 7, 2016", "q1": "Patrick Ballas", "q1a": "$100", "q2": "Casey Ramsay", "q2a": "$100", "q3": "Seth Bregman", "q3a": "$100", "fin": "Sam Schell & Casey Bates", "fina": "$200"}, {"id": "yw-2017", "year": "2017", "sb": "LI", "date": "February 5, 2017", "q1": "Paul Levin", "q1a": "$100", "q2": "Lenny Brown", "q2a": "$100", "q3": "Hien Doan", "q3a": "$100", "fin": "Gerald Pitts", "fina": "$200"}, {"id": "yw-2018", "year": "2018", "sb": "LII", "date": "February 4, 2018", "q1": "Darrell Pitts", "q1a": "$100", "q2": "John Pak", "q2a": "$100", "q3": "Nam", "q3a": "$100", "fin": "Brian Montañez", "fina": "$200"}, {"id": "yw-2019", "year": "2019", "sb": "LIII", "date": "February 3, 2019", "q1": "Victoria Morales", "q1a": "$100", "q2": "Casey Ramsay", "q2a": "$100", "q3": "Gerald Pitts", "q3a": "$100", "fin": "Gerald Pitts", "fina": "$200"}, {"id": "yw-2020", "year": "2020", "sb": "LIV", "date": "February 2, 2020", "q1": "John Pak", "q1a": "$100", "q2": "John Pak", "q2a": "$100", "q3": "Pham", "q3a": "$100", "fin": "Samantha Schell", "fina": "$200"}, {"id": "yw-2021", "year": "2021", "sb": "LV", "date": "February 7, 2021", "q1": "Marion Watson", "q1a": "$200", "q2": "John Pak", "q2a": "$200", "q3": "Daphne Woolfolk", "q3a": "$200", "fin": "John Pak", "fina": "$400"}, {"id": "yw-2022", "year": "2022", "sb": "LVI", "date": "February 13, 2022", "q1": "Darrell Pitts", "q1a": "$200", "q2": "Mitch Rice", "q2a": "$200", "q3": "John Pak", "q3a": "$200", "fin": "Casey Ramsay", "fina": "$400"}, {"id": "yw-2023", "year": "2023", "sb": "LVII", "date": "February 12, 2023", "q1": "Ruby Urabe", "q1a": "$200", "q2": "Alex Winston", "q2a": "$200", "q3": "Courtney Maynard", "q3a": "$200", "fin": "Darrell Pitts", "fina": "$400"}, {"id": "yw-2024", "year": "2024", "sb": "LVIII", "date": "February 11, 2024", "q1": "Mitch Rice", "q1a": "$300", "q2": "Justin Garcia", "q2a": "$300", "q3": "Oliver Bundalian", "q3a": "$300", "fin": "Taryn Grows", "fina": "$600"}, {"id": "yw-2025", "year": "2025", "sb": "LIX", "date": "February 9, 2025", "q1": "Hector", "q1a": "$300", "q2": "Courtney", "q2a": "$300", "q3": "Courtney", "q3a": "$300", "fin": "Dean", "fina": "$600"}, {"id": "yw-2026", "year": "2026", "sb": "LX", "date": "February 8, 2026", "q1": "Kristen & Ziggy", "q1a": "$300", "q2": "Dean", "q2a": "$300", "q3": "Oliver", "q3a": "$300", "fin": "Courtney", "fina": "$550"}]}</script>
+<p class="admin-note" id="adminHint">Commissioner? <a href="index.html#login">Log in on the Home page</a> to edit this page.</p>
 </main>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Picture"><button class="sheet-x" id="viewerClose" type="button" aria-label="Close">×</button><figure><img id="viewerImg" alt=""><figcaption id="viewerCap"></figcaption></figure></div>
-<script src="config.js?v=8917bcaa"></script>
-<script src="site.js?v=8917bcaa"></script>
+<script src="config.js?v=7fe9415f"></script>
+<script src="site.js?v=7fe9415f"></script>
 </body>
 </html>

@@ -444,6 +444,63 @@ body.has-bar main.wrap{padding-bottom:110px}
   .big-top .seg button,.big-top .tool{min-height:32px;padding:4px 9px;font-size:12.5px}
   .big-body{place-items:start center}
 }
+
+/* price / squares left / pot as small "superscript" figures in the banner's bottom-right corner */
+header.band .banner.stats-corner > .stats{position:absolute;right:calc(var(--ir,0px) + clamp(8px,1.3vw,22px));bottom:clamp(6px,1vw,16px);left:auto;top:auto;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;gap:2px clamp(8px,1.1vw,18px);width:auto;max-width:calc(100% - 16px);margin:0;padding:clamp(3px,.4vw,6px) clamp(7px,.8vw,12px);line-height:1.15;border-radius:7px;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+header.band .banner.stats-corner > .stats .stat{display:flex;align-items:baseline;gap:4px;text-align:right;white-space:nowrap}
+header.band .banner.stats-corner > .stats .stat b{font-size:clamp(11px,1.05vw,18px);color:#f5c451;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+header.band .banner.stats-corner > .stats .stat small{font-size:clamp(8px,.62vw,11px);letter-spacing:.08em;color:#e8eeec;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+/* unpaid squares belonging to someone else */
+.cell .nm.reserved{font-style:italic;font-weight:500;color:var(--muted)}
+
+/* commissioner row tools on the extra pages */
+.row-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row-acts .tog{margin:0;text-transform:none;letter-spacing:0;font-size:12.5px;min-width:34px;min-height:32px}
+.row-acts .tog[disabled]{opacity:.35;cursor:default}
+.row-acts .tog.danger{color:var(--danger)}
+.row-acts .tog.armed{background:var(--danger);color:#fff;border-color:transparent}
+figure.slot .row-acts{border-top:1px dashed var(--line);padding-top:8px}
+.add-row{display:inline-flex;width:auto;margin-top:14px;padding:9px 16px}
+.page-status{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:8px;font-size:14px;box-shadow:0 8px 26px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.page-status.err{background:var(--danger);color:#fff}
+table.yw td.acts{width:1%;white-space:nowrap}
+table.yw td.acts .row-acts{flex-wrap:nowrap}
+.rowform .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.rowform .btns{display:flex;gap:10px;margin-top:16px}
+.rowform .btns .btn{margin-top:0}
+.rowform .btns .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.modal-card.wide{max-width:560px}
+.empty-list{padding:18px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;background:var(--surface)}
+
+/* Hall of Fame leaderboards */
+.hof-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:26px;align-items:start}
+.lb-wrap{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+table.lb{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+table.lb th{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-align:left;background:var(--board-bg);color:var(--board-ink);padding:10px 12px}
+table.lb td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:middle}
+table.lb tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 60%,transparent)}
+table.lb .rk{width:44px;font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--muted)}
+table.lb tr:nth-child(-n+3) .rk{color:#c99a1e}
+table.lb .nm{font-weight:600;overflow-wrap:anywhere}
+table.lb .num{text-align:right;font-family:var(--f-mono);font-weight:700;white-space:nowrap}
+table.lb th.num{text-align:right}
+table.lb td.acts{width:1%;white-space:nowrap}
+table.lb td.acts .row-acts{flex-wrap:nowrap;gap:4px}
+table.lb td.acts .tog{min-height:30px;padding:4px 8px}
+@media (max-width:760px){
+  table.yw td.acts{display:block;width:100%}
+  table.yw td.acts::before{content:none}
+  table.yw td.acts .row-acts{flex-wrap:wrap}
+  table.lb td,table.lb th{padding:8px 9px}
+  table.lb td.acts .row-acts{flex-wrap:wrap;justify-content:flex-end}
+}
+@media (max-width:600px){
+  header.band .banner.stats-corner > .stats{flex-direction:column;align-items:flex-end;gap:0;right:calc(var(--ir,0px) + 6px);bottom:5px;padding:3px 7px;border-radius:6px}
+  header.band .banner.stats-corner > .stats .stat{justify-content:flex-end}
+  header.band .banner.stats-corner > .stats .stat b{font-size:11px}
+  header.band .banner.stats-corner > .stats .stat small{font-size:7.5px;letter-spacing:.06em}
+}
 </style>
 </head>
 <body>
@@ -911,7 +968,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
         btn.type = "button"; btn.dataset.id = id;
         if (sq) {
           btn.classList.add("taken", sq.paid ? "paid" : "unpaid"); if (sq.mine) btn.classList.add("mine");
-          const n = el("span", "nm ff-" + (sq.font || "clean")), np = nameParts(sq.name);
+          const n = el("span", "nm ff-" + (sq.font || "clean") + (sq.reserved ? " reserved" : "")), np = sq.reserved ? { short: "Reserved", init: "•••" } : nameParts(sq.name);
           n.append(el("span", "n-full", sq.name), el("span", "n-short", np.short), el("span", "n-init", np.init));
           if (sq.color && sq.color !== "ink") n.style.setProperty("--pc", "var(--pc-" + sq.color + ")");
           const label = sq.paid ? "PAID" : (sq.mine && sq.expiresAt ? minsLeft(sq) + "m left" : "UNPAID");
@@ -1542,11 +1599,14 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (wide && hero.parentElement !== banner) banner.append(hero);
     else if (!wide && hero.parentElement === banner) $("band").querySelector(".wrap").prepend(hero);
     // In the left-title layout, the price/squares/pot figures fill the matching space on the right.
-    const stats = $("band").querySelector(".stats"), wrap = $("band").querySelector(".wrap");
-    const statsIn = left && wide;
+    // Otherwise they sit small in the banner's bottom-right corner, lined up with the picture's right edge.
+    const stats = $("band").querySelector(".stats");
+    const leftStats = left && wide, corner = !left && !banner.hidden, statsIn = leftStats || corner;
     if (statsIn && stats.parentElement !== banner) banner.append(stats);
-    else if (!statsIn && stats.parentElement === banner) wrap.append(stats);
-    $("band").classList.toggle("stats-in-banner", statsIn);
+    else if (!statsIn && stats.parentElement === banner) hero.append(stats);
+    banner.classList.toggle("stats-corner", corner);
+    if (corner) { const bw = banner.getBoundingClientRect(), iw = img.getBoundingClientRect(); banner.style.setProperty("--ir", Math.max(0, Math.round(bw.right - iw.right)) + "px"); }
+    $("band").classList.toggle("stats-in-banner", leftStats);
     $("band").classList.toggle("hero-in-banner", hero.parentElement === banner);
   }
   window.addEventListener("resize", placeHero);

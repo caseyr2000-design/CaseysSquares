@@ -446,9 +446,66 @@ body.has-bar main.wrap{padding-bottom:110px}
   .big-top .seg button,.big-top .tool{min-height:32px;padding:4px 9px;font-size:12.5px}
   .big-body{place-items:start center}
 }
+
+/* price / squares left / pot as small "superscript" figures in the banner's bottom-right corner */
+header.band .banner.stats-corner > .stats{position:absolute;right:calc(var(--ir,0px) + clamp(8px,1.3vw,22px));bottom:clamp(6px,1vw,16px);left:auto;top:auto;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;gap:2px clamp(8px,1.1vw,18px);width:auto;max-width:calc(100% - 16px);margin:0;padding:clamp(3px,.4vw,6px) clamp(7px,.8vw,12px);line-height:1.15;border-radius:7px;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+header.band .banner.stats-corner > .stats .stat{display:flex;align-items:baseline;gap:4px;text-align:right;white-space:nowrap}
+header.band .banner.stats-corner > .stats .stat b{font-size:clamp(11px,1.05vw,18px);color:#f5c451;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+header.band .banner.stats-corner > .stats .stat small{font-size:clamp(8px,.62vw,11px);letter-spacing:.08em;color:#e8eeec;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+/* unpaid squares belonging to someone else */
+.cell .nm.reserved{font-style:italic;font-weight:500;color:var(--muted)}
+
+/* commissioner row tools on the extra pages */
+.row-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row-acts .tog{margin:0;text-transform:none;letter-spacing:0;font-size:12.5px;min-width:34px;min-height:32px}
+.row-acts .tog[disabled]{opacity:.35;cursor:default}
+.row-acts .tog.danger{color:var(--danger)}
+.row-acts .tog.armed{background:var(--danger);color:#fff;border-color:transparent}
+figure.slot .row-acts{border-top:1px dashed var(--line);padding-top:8px}
+.add-row{display:inline-flex;width:auto;margin-top:14px;padding:9px 16px}
+.page-status{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:8px;font-size:14px;box-shadow:0 8px 26px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.page-status.err{background:var(--danger);color:#fff}
+table.yw td.acts{width:1%;white-space:nowrap}
+table.yw td.acts .row-acts{flex-wrap:nowrap}
+.rowform .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.rowform .btns{display:flex;gap:10px;margin-top:16px}
+.rowform .btns .btn{margin-top:0}
+.rowform .btns .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.modal-card.wide{max-width:560px}
+.empty-list{padding:18px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;background:var(--surface)}
+
+/* Hall of Fame leaderboards */
+.hof-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:26px;align-items:start}
+.lb-wrap{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+table.lb{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+table.lb th{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-align:left;background:var(--board-bg);color:var(--board-ink);padding:10px 12px}
+table.lb td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:middle}
+table.lb tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 60%,transparent)}
+table.lb .rk{width:44px;font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--muted)}
+table.lb tr:nth-child(-n+3) .rk{color:#c99a1e}
+table.lb .nm{font-weight:600;overflow-wrap:anywhere}
+table.lb .num{text-align:right;font-family:var(--f-mono);font-weight:700;white-space:nowrap}
+table.lb th.num{text-align:right}
+table.lb td.acts{width:1%;white-space:nowrap}
+table.lb td.acts .row-acts{flex-wrap:nowrap;gap:4px}
+table.lb td.acts .tog{min-height:30px;padding:4px 8px}
+@media (max-width:760px){
+  table.yw td.acts{display:block;width:100%}
+  table.yw td.acts::before{content:none}
+  table.yw td.acts .row-acts{flex-wrap:wrap}
+  table.lb td,table.lb th{padding:8px 9px}
+  table.lb td.acts .row-acts{flex-wrap:wrap;justify-content:flex-end}
+}
+@media (max-width:600px){
+  header.band .banner.stats-corner > .stats{flex-direction:column;align-items:flex-end;gap:0;right:calc(var(--ir,0px) + 6px);bottom:5px;padding:3px 7px;border-radius:6px}
+  header.band .banner.stats-corner > .stats .stat{justify-content:flex-end}
+  header.band .banner.stats-corner > .stats .stat b{font-size:11px}
+  header.band .banner.stats-corner > .stats .stat small{font-size:7.5px;letter-spacing:.06em}
+}
 </style>
 </head>
-<body>
+<body data-page="hof">
 <div class="offline" id="offline" hidden><div class="wrap" id="offlineTxt">Can't reach the board right now. Retrying…</div></div>
 <header class="band" id="band">
   <div class="banner" id="banner" hidden><img id="bannerImg" alt="" decoding="async"></div>
@@ -467,12 +524,14 @@ body.has-bar main.wrap{padding-bottom:110px}
   <nav class="sitenav" aria-label="Site"><a href="index.html">Home</a><a href="odds.html">Odds</a><a href="hot-squares.html">Hot Squares</a><a href="yearly-winners.html">Yearly Winners</a><a href="hall-of-fame.html" aria-current="page">Hall of Fame</a></nav>
 </header>
 <main class="wrap page">
-<div class="admin-on" id="adminOn" hidden>You're logged in as commissioner. Use the buttons under each picture to upload, replace or remove it.</div>
-<div class="page-head"><h2>Hall of Fame</h2></div><section class="page-section"><h3>Most Wins</h3><div class="slot-grid one"><figure class="slot" data-slot="hof-wins" data-label="Most Wins"></figure></div></section><section class="page-section"><h3>Top Dollars</h3><div class="slot-grid"><figure class="slot" data-slot="hof-dollars1" data-label="Top Dollars 1"></figure><figure class="slot" data-slot="hof-dollars2" data-label="Top Dollars 2"></figure></div></section>
-<p class="admin-note" id="adminHint">Commissioner? <a href="index.html#login">Log in on the Home page</a> to upload pictures here.</p>
+<div class="admin-on" id="adminOn" hidden>You're logged in as commissioner. Use ↑ ↓ to move rows, Edit and Delete to change them, “+ Add” for new rows, and the picture buttons to upload or remove pictures.</div>
+<div class="page-head"><h2>Hall of Fame</h2><p>Every quarter and final-score win since 2016</p></div>
+<div id="pageBody"></div>
+<script type="application/json" id="pageDefault">{"wins": [{"name": "John Pak", "wins": "6"}, {"name": "Courtney", "wins": "3"}, {"name": "Darrell Pitts", "wins": "3"}, {"name": "Casey Ramsay", "wins": "3"}, {"name": "Gerald Pitts", "wins": "3"}, {"name": "Dean", "wins": "2"}, {"name": "Mitch Rice", "wins": "2"}], "dollars": [{"name": "Courtney", "total": "$1,150"}, {"name": "John Pak", "total": "$1,100"}, {"name": "Dean", "total": "$900"}, {"name": "Darrell Pitts", "total": "$700"}, {"name": "Casey Ramsay", "total": "$600"}, {"name": "Taryn Grows", "total": "$600"}, {"name": "Gerald Pitts", "total": "$500"}, {"name": "Mitch Rice", "total": "$500"}, {"name": "Hector", "total": "$300"}, {"name": "Justin Garcia", "total": "$300"}, {"name": "Kristen & Ziggy", "total": "$300"}, {"name": "Oliver", "total": "$300"}, {"name": "Oliver Bundalian", "total": "$300"}, {"name": "Alex Winston", "total": "$200"}, {"name": "Brian Montañez", "total": "$200"}]}</script>
+<p class="admin-note" id="adminHint">Commissioner? <a href="index.html#login">Log in on the Home page</a> to edit this page.</p>
 </main>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Picture"><button class="sheet-x" id="viewerClose" type="button" aria-label="Close">×</button><figure><img id="viewerImg" alt=""><figcaption id="viewerCap"></figcaption></figure></div>
-<script src="config.js?v=8917bcaa"></script>
-<script src="site.js?v=8917bcaa"></script>
+<script src="config.js?v=7fe9415f"></script>
+<script src="site.js?v=7fe9415f"></script>
 </body>
 </html>

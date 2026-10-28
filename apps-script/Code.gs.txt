@@ -51,7 +51,8 @@ function doPost(e) {
     login: login, logout: logout, saveSettings: saveSettings, setPaid: setPaid, adminRelease: adminRelease,
     draw: draw, reset: reset, saveScores: saveScores, uploadImage: uploadImage, removeImage: removeImage,
     createInvite: createInvite, updateInvite: updateInvite, sendInvite: sendInvite, adminAssign: adminAssign,
-    exportLedger: exportLedger, requestInvite: requestInvite, dismissRequest: dismissRequest
+    exportLedger: exportLedger, requestInvite: requestInvite, dismissRequest: dismissRequest,
+    getPage: getPage, savePage: savePage
   };
   var out;
   try {
@@ -145,18 +146,19 @@ function getState(playerToken, adminToken) {
   var lock = LockService.getScriptLock();
   if (lock.tryLock(500)) { try { all = props_().getProperties(); purge_(cfg, all); } finally { lock.releaseLock(); } }
   var me = inviteByToken_(playerToken, all), inv = invites_(all), sq = squares_(all), out = {}, hold = cfg.holdMinutes * 60000;
-  var counts = {};
+  var counts = {}, admin = isAdmin_(adminToken);
   for (var id in sq) {
-    var s = sq[id], who = s.iid != null ? inv[s.iid] : null;
+    var s = sq[id], who = s.iid != null ? inv[s.iid] : null, mine = !!me && s.iid === me.id;
     if (s.iid != null) { var c = counts[s.iid] = counts[s.iid] || { squares: 0, paid: 0 }; c.squares++; if (s.paid) c.paid++; }
+    // A player's name shows to everyone once the square is paid; until then only they and the commissioner see it.
+    var hide = !s.paid && !mine && !admin;
     out[id] = {
-      name: who ? who.name : (s.name || 'Player'), font: who ? who.font : s.font, color: who ? who.color : s.color,
-      paid: !!s.paid, claimedAt: s.claimedAt,
-      owner: s.iid != null ? 'i' + s.iid : 'p' + s.pid, mine: !!me && s.iid === me.id,
+      name: hide ? 'Reserved' : (who ? who.name : (s.name || 'Player')), font: hide ? 'clean' : (who ? who.font : s.font), color: hide ? 'ink' : (who ? who.color : s.color),
+      reserved: hide, paid: !!s.paid, claimedAt: s.claimedAt,
+      owner: hide ? 'r' : (s.iid != null ? 'i' + s.iid : 'p' + s.pid), mine: mine,
       expiresAt: !s.paid && !cfg.locked ? s.claimedAt + hold : null
     };
   }
-  var admin = isAdmin_(adminToken);
   var res = {
     cfg: publicCfg_(cfg), admin: admin, squares: out, canClaim: !!me && !me.revoked, canUpload: admin, inviteOnly: true,
     me: me ? { name: me.name, font: me.font, color: me.color, revoked: !!me.revoked } : null
@@ -518,4 +520,60 @@ function exportLedger(adminToken) {
   }));
   sh.setFrozenRows(1);
   return ss.getUrl();
+}
+
+// ---------- editable page content (Odds, Hot Squares, Yearly Winners, Hall of Fame) ----------
+// 'pg:<name>' = {rev, n}; the page's JSON is split across 'pg:<name>:0' … 'pg:<name>:<n-1>' (each property holds at most 9 KB).
+var PAGE_NAMES = ['odds', 'hot', 'yw', 'hof'];
+function pageName_(name) { var n = pick_(String(name), PAGE_NAMES, ''); if (!n) fail_('Unknown page.'); return n; }
+function readPage_(name, all) {
+  var head = all['pg:' + name];
+  if (!head) return null;
+  head = JSON.parse(head);
+  var s = '';
+  for (var i = 0; i < head.n; i++) s += all['pg:' + name + ':' + i] || '';
+  try { return { rev: head.rev, data: JSON.parse(s) }; } catch (e) { return null; }
+}
+function getPage(name) { return readPage_(pageName_(name), props_().getProperties()); }
+function tidyPage_(v, depth) {
+  if (depth > 5) fail_('That page is nested too deeply.');
+  if (typeof v === 'string') return clean_(v, 300);
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  if (typeof v === 'boolean' || v === null || v === undefined) return v == null ? null : v;
+  if (Array.isArray(v)) {
+    if (v.length > 150) fail_('A list can have at most 150 rows.');
+    return v.map(function (x) { return tidyPage_(x, depth + 1); });
+  }
+  if (typeof v === 'object') {
+    var o = {}, keys = Object.keys(v);
+    if (keys.length > 40) fail_('Too many fields in one row.');
+    keys.forEach(function (k) { var kk = String(k).replace(/[^A-Za-z0-9_]/g, '').slice(0, 24); if (kk) o[kk] = tidyPage_(v[k], depth + 1); });
+    return o;
+  }
+  return null;
+}
+function savePage(adminToken, name, data, rev) {
+  requireAdmin_(adminToken);
+  name = pageName_(name);
+  if (!data || typeof data !== 'object' || Array.isArray(data)) fail_('Nothing to save.');
+  var s = JSON.stringify(tidyPage_(data, 0));
+  if (s.length > 80000) fail_('That page is too large to save.');
+  return withLock_(function () {
+    var p = props_(), all = p.getProperties(), cur = readPage_(name, all), curRev = cur ? cur.rev : 0;
+    if (rev != null && Number(rev) !== curRev) fail_('This page was changed on another screen. Reload the page and try again.');
+    var oldN = all['pg:' + name] ? JSON.parse(all['pg:' + name]).n : 0, parts = [], i = 0;
+    while (i < s.length) {
+      var j = Math.min(s.length, i + 2000);
+      var code = s.charCodeAt(j - 1);
+      if (j < s.length && code >= 0xD800 && code <= 0xDBFF) j--; // never split an emoji in half
+      parts.push(s.slice(i, j)); i = j;
+    }
+    if (!parts.length) parts.push('{}');
+    var w = {};
+    parts.forEach(function (part, k) { w['pg:' + name + ':' + k] = part; });
+    w['pg:' + name] = JSON.stringify({ rev: curRev + 1, n: parts.length });
+    p.setProperties(w);
+    for (var k = parts.length; k < oldN; k++) p.deleteProperty('pg:' + name + ':' + k);
+    return { rev: curRev + 1 };
+  });
 }
