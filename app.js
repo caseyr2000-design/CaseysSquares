@@ -849,13 +849,33 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   };
 
   // ---------- header banner ----------
+  // Layout comes from config.js: SQUARES_HEADER_LAYOUT = { text: "left", clear: 0.19, bg: "#234c48" } puts the
+  // title in the open space left of the picture's centre (clear = share of the picture's width that is empty on
+  // each side); without it the title sits over the middle of the picture.
   function placeHero() {
-    const hero = $("heroText"), banner = $("banner");
-    const wide = !banner.hidden && window.innerWidth >= 760;
+    const hero = $("heroText"), banner = $("banner"), img = $("bannerImg");
+    const L = window.SQUARES_HEADER_LAYOUT || null, usingDefault = !(S.st && S.st.cfg.imageUrls && S.st.cfg.imageUrls.header);
+    const left = !!(L && L.text === "left" && usingDefault);
+    banner.classList.toggle("layout-left", left);
+    banner.style.background = left && L.bg ? L.bg : "";
+    let wide = !banner.hidden && window.innerWidth >= 760;
+    if (left && !banner.hidden) {
+      const W = banner.clientWidth, H = img.clientHeight || 1, aspect = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 2;
+      const drawnW = Math.min(W, H * aspect), free = (W - drawnW) / 2 + drawnW * (L.clear || 0);
+      banner.style.setProperty("--free", Math.floor(free) + "px");
+      wide = free >= 280;
+    }
     if (wide && hero.parentElement !== banner) banner.append(hero);
     else if (!wide && hero.parentElement === banner) $("band").querySelector(".wrap").prepend(hero);
+    // In the left-title layout, the price/squares/pot figures fill the matching space on the right.
+    const stats = $("band").querySelector(".stats"), wrap = $("band").querySelector(".wrap");
+    const statsIn = left && wide;
+    if (statsIn && stats.parentElement !== banner) banner.append(stats);
+    else if (!statsIn && stats.parentElement === banner) wrap.append(stats);
+    $("band").classList.toggle("stats-in-banner", statsIn);
   }
   window.addEventListener("resize", placeHero);
+  $("bannerImg").addEventListener("load", placeHero);
 
   // ---------- rules ----------
   const DEFAULT_MAX = 8;
