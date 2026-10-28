@@ -258,6 +258,7 @@ window.SquaresBackend = (function () {
   const QS = [["q1", "Q1"], ["q2", "Q2"], ["q3", "Q3"], ["fin", "Final Score"]];
   const SPECS = {
     odds: [{ key: "items", kind: "gallery", prefix: "odds", noun: "picture", fields: [{ k: "caption", label: "Caption (optional)" }] }],
+    pay: [{ key: "items", kind: "gallery", prefix: "pay", noun: "picture", fields: [{ k: "caption", label: "Caption (optional)" }] }],
     hot: [{ key: "items", kind: "gallery", prefix: "hot", noun: "picture", fields: [{ k: "caption", label: "Caption (optional)", ph: "Super Bowl LXI" }] }],
     yw: [{ key: "rows", kind: "yw", prefix: "yw", noun: "year", fields: [
       { k: "year", label: "Year", half: 1 }, { k: "sb", label: "Super Bowl", half: 1, ph: "LXI" },

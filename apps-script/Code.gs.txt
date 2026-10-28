@@ -18,7 +18,7 @@ var SCHEMES = ['turf', 'black', 'blue', 'white', 'blackblue', 'bluewhite', 'crim
   'slatemint', 'navycoral', 'graphite', 'oceansand', 'terracotta', 'sageclay', 'desert', 'oliverust', 'espresso'];
 var IMG_SLOTS = ['logoTop', 'logoSide', 'header'];
 // Picture slots on the extra pages (Odds, Hot Squares, Yearly Winners, Hall of Fame), e.g. 'hot-liii', 'yw-2019'.
-var PAGE_SLOT_RE = /^(odds|hot|yw|hof)-[a-z0-9]{1,12}$/;
+var PAGE_SLOT_RE = /^(odds|hot|yw|hof|pay)-[a-z0-9]{1,12}$/;
 function validSlot_(slot) { return IMG_SLOTS.indexOf(slot) >= 0 || PAGE_SLOT_RE.test(String(slot)); }
 var CELL_RE = /^r[0-9]c[0-9]$/;
 var DEFAULT_CFG = {
@@ -528,7 +528,7 @@ function exportLedger(adminToken) {
 
 // ---------- editable page content (Odds, Hot Squares, Yearly Winners, Hall of Fame) ----------
 // 'pg:<name>' = {rev, n}; the page's JSON is split across 'pg:<name>:0' … 'pg:<name>:<n-1>' (each property holds at most 9 KB).
-var PAGE_NAMES = ['odds', 'hot', 'yw', 'hof'];
+var PAGE_NAMES = ['odds', 'hot', 'yw', 'hof', 'pay'];
 function pageName_(name) { var n = pick_(String(name), PAGE_NAMES, ''); if (!n) fail_('Unknown page.'); return n; }
 function readPage_(name, all) {
   var head = all['pg:' + name];
