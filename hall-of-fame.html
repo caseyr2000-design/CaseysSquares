@@ -531,6 +531,41 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
   header.band .banner.stats-corner > .stats .stat b{font-size:11px}
   header.band .banner.stats-corner > .stats .stat small{font-size:7.5px;letter-spacing:.06em}
 }
+
+/* ---------- Steps 1-2-3 ---------- */
+.step{display:flex;align-items:flex-start;gap:11px;margin:20px 0 6px;padding-top:16px;border-top:1px solid var(--line)}
+.claim > .step:first-of-type,.claim > #whoBox + .step,.claim > #nameBox + .step{margin-top:14px}
+.step-n{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#1f9d48;color:#fff;font-family:var(--f-display);font-weight:900;font-size:19px;line-height:1;box-shadow:0 2px 0 #157a37,0 3px 8px rgba(31,157,72,.35)}
+.step-t{display:grid;gap:1px;min-width:0}
+.step-t small{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1f9d48}
+.step-t b{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);line-height:1.1}
+.step-t span{font-size:13px;color:var(--muted)}
+.mine-box{margin-top:6px}
+.mine-box .lbl{margin-top:8px}
+/* emoji picker */
+.emojis{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.emojis button{all:unset;box-sizing:border-box;display:grid;place-items:center;aspect-ratio:1;min-width:0;font-size:clamp(15px,1.5vw,20px);border:1px solid var(--line);border-radius:7px;background:var(--surface);cursor:pointer;line-height:1;transition:transform .08s}
+.emojis button:hover:not(:disabled){transform:scale(1.08);border-color:var(--turf)}
+.emojis button:focus-visible{outline:2px solid var(--turf);outline-offset:1px}
+.emojis button[aria-pressed="true"]{border:2px solid #1f9d48;background:color-mix(in srgb,#1f9d48 14%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,#1f9d48 30%,transparent)}
+.emojis button:disabled{opacity:.28;filter:grayscale(1);cursor:not-allowed}
+.emoji-note{margin:6px 0 0;font-size:12px}
+@media (max-width:600px){.emojis{gap:3px}.emojis button{font-size:18px;border-radius:6px}}
+.pv{display:inline-flex;flex-direction:column;align-items:center;gap:1px}
+.pv-em{font-size:1.25em;line-height:1}
+/* emoji on the board: emoji on top, name underneath */
+.cell .em{order:-1;font-size:max(12px,calc(var(--cell)*.30));line-height:1;margin-bottom:1px}
+.board.lvl-s .cell.has-em .pd,.board.lvl-i .cell.has-em .pd{display:none}
+.board.lvl-i .cell.has-em .nm{font-size:max(9px,calc(var(--cell)*.24))}
+.board.lvl-i .cell .em{font-size:max(11px,calc(var(--cell)*.34))}
+/* pop-ups */
+.max-card{text-align:center;max-width:380px}
+.max-card h2{padding-right:0}
+.max-icon{width:58px;height:58px;margin:4px auto 10px;border-radius:50%;display:grid;place-items:center;background:var(--danger);color:#fff;font-family:var(--f-display);font-weight:900;font-size:28px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.max-card p{font-size:15.5px;margin:0 0 4px}
+#payModal .step{border-top:0;padding-top:0;margin-top:0}
+.pay-modal-text{font-size:15.5px;margin:10px 0 2px}
+#payModal .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 </style>
 </head>
 <body data-page="hof">
@@ -559,7 +594,7 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
 <p class="admin-note" id="adminHint">Commissioner? <a href="index.html#login">Log in on the Home page</a> to edit this page.</p>
 </main>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Picture"><button class="sheet-x" id="viewerClose" type="button" aria-label="Close">×</button><figure><img id="viewerImg" alt=""><figcaption id="viewerCap"></figcaption></figure></div>
-<script src="config.js?v=106bb706"></script>
-<script src="site.js?v=106bb706"></script>
+<script src="config.js?v=b423fc5f"></script>
+<script src="site.js?v=b423fc5f"></script>
 </body>
 </html>

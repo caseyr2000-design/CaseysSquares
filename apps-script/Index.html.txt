@@ -529,6 +529,41 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
   header.band .banner.stats-corner > .stats .stat b{font-size:11px}
   header.band .banner.stats-corner > .stats .stat small{font-size:7.5px;letter-spacing:.06em}
 }
+
+/* ---------- Steps 1-2-3 ---------- */
+.step{display:flex;align-items:flex-start;gap:11px;margin:20px 0 6px;padding-top:16px;border-top:1px solid var(--line)}
+.claim > .step:first-of-type,.claim > #whoBox + .step,.claim > #nameBox + .step{margin-top:14px}
+.step-n{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#1f9d48;color:#fff;font-family:var(--f-display);font-weight:900;font-size:19px;line-height:1;box-shadow:0 2px 0 #157a37,0 3px 8px rgba(31,157,72,.35)}
+.step-t{display:grid;gap:1px;min-width:0}
+.step-t small{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1f9d48}
+.step-t b{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);line-height:1.1}
+.step-t span{font-size:13px;color:var(--muted)}
+.mine-box{margin-top:6px}
+.mine-box .lbl{margin-top:8px}
+/* emoji picker */
+.emojis{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.emojis button{all:unset;box-sizing:border-box;display:grid;place-items:center;aspect-ratio:1;min-width:0;font-size:clamp(15px,1.5vw,20px);border:1px solid var(--line);border-radius:7px;background:var(--surface);cursor:pointer;line-height:1;transition:transform .08s}
+.emojis button:hover:not(:disabled){transform:scale(1.08);border-color:var(--turf)}
+.emojis button:focus-visible{outline:2px solid var(--turf);outline-offset:1px}
+.emojis button[aria-pressed="true"]{border:2px solid #1f9d48;background:color-mix(in srgb,#1f9d48 14%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,#1f9d48 30%,transparent)}
+.emojis button:disabled{opacity:.28;filter:grayscale(1);cursor:not-allowed}
+.emoji-note{margin:6px 0 0;font-size:12px}
+@media (max-width:600px){.emojis{gap:3px}.emojis button{font-size:18px;border-radius:6px}}
+.pv{display:inline-flex;flex-direction:column;align-items:center;gap:1px}
+.pv-em{font-size:1.25em;line-height:1}
+/* emoji on the board: emoji on top, name underneath */
+.cell .em{order:-1;font-size:max(12px,calc(var(--cell)*.30));line-height:1;margin-bottom:1px}
+.board.lvl-s .cell.has-em .pd,.board.lvl-i .cell.has-em .pd{display:none}
+.board.lvl-i .cell.has-em .nm{font-size:max(9px,calc(var(--cell)*.24))}
+.board.lvl-i .cell .em{font-size:max(11px,calc(var(--cell)*.34))}
+/* pop-ups */
+.max-card{text-align:center;max-width:380px}
+.max-card h2{padding-right:0}
+.max-icon{width:58px;height:58px;margin:4px auto 10px;border-radius:50%;display:grid;place-items:center;background:var(--danger);color:#fff;font-family:var(--f-display);font-weight:900;font-size:28px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.max-card p{font-size:15.5px;margin:0 0 4px}
+#payModal .step{border-top:0;padding-top:0;margin-top:0}
+.pay-modal-text{font-size:15.5px;margin:10px 0 2px}
+#payModal .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -584,39 +619,47 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
         <label for="myName">Name on your squares</label>
         <input id="myName" type="text" maxlength="24" placeholder="e.g. Casey R." autocomplete="nickname">
       </div>
+      <div class="step"><span class="step-n" aria-hidden="true">1</span><div class="step-t"><small>Step One</small><b>Make Your Squares Unique</b><span>Pick your emoji, font and color.</span></div></div>
       <div id="styleBox">
+      <div id="emojiBox" hidden>
+      <span class="lbl" id="emojiLbl">Emoji</span>
+      <div class="emojis" id="emojiPick" role="group" aria-labelledby="emojiLbl"></div>
+      <p class="note emoji-note">Each emoji belongs to one player. Greyed-out ones are taken.</p>
+      </div>
       <span class="lbl" id="fontLbl">Font</span>
       <div class="fonts" id="fontPick" role="group" aria-labelledby="fontLbl"></div>
       <span class="lbl" id="colorLbl">Color</span>
       <div class="swatches" id="colorPick" role="group" aria-labelledby="colorLbl"></div>
-      <div class="preview"><div class="pv" id="stylePv">You</div><span>How your name looks on the board</span></div>
+      <div class="preview"><div class="pv" id="stylePv"><span class="pv-em" id="pvEm" hidden></span><span id="pvName">You</span></div><span>How your squares look on the board</span></div>
       <button class="linkbtn" id="applyStyle" type="button" hidden>Apply this style to my squares</button>
-      <p class="note" id="styleNote" hidden>Your font and color show on all your squares. Changes save automatically.</p>
+      <p class="note" id="styleNote" hidden>Your emoji, font and color show on all your squares. Changes save automatically.</p>
       </div>
+      <div class="step"><span class="step-n" aria-hidden="true">2</span><div class="step-t"><small>Step Two</small><b>Select Your Squares</b><span>Tap open squares on the board, then claim them.</span></div></div>
       <div class="total"><span id="selCount">0 selected</span><b id="selTotal">$0</b></div>
       <button class="btn" id="claimBtn" disabled>Select squares on the board</button>
       <div id="claimMsg" class="msg" hidden></div>
       <p class="note" id="holdNote"></p>
+      <div class="step"><span class="step-n" aria-hidden="true">3</span><div class="step-t"><small>Step Three</small><b>Make Your Payment</b><span>Pay with Venmo or PayPal. The app opens for you.</span></div></div>
+      <p class="note" id="step3Empty">Your amount due shows here after you claim squares in Step 2.</p>
+      <div id="myPanel" class="mine-box" hidden>
+        <span class="lbl">Your squares</span>
+        <div class="chips" id="myChips"></div>
+        <div class="total"><span>Still owed</span><b id="owed">$0</b></div>
+        <div class="paybtns" id="payBtns">
+          <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener">Venmo</a>
+          <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener">PayPal</a>
+        </div>
+        <span class="payweb" id="venmoWeb" hidden>Venmo app didn't open? <a id="venmoWebLink" target="_blank" rel="noopener">Pay on venmo.com</a></span>
+        <div class="handle" id="venmoRow"><span>Venmo</span><code id="venmoTxt"></code><button type="button" data-copy="venmoTxt">Copy</button></div>
+        <div class="handle" id="paypalRow"><span>PayPal</span><code id="paypalTxt"></code><button type="button" data-copy="paypalTxt">Copy</button></div>
+        <p class="note" id="payNote" style="margin-top:8px"></p>
+      </div>
       <button class="btn reqbtn" id="reqBtn" type="button" hidden>Request an Invitation</button>
     </div>
 
     <div class="panel rules" id="rulesPanel">
       <h2>Rules</h2>
       <ul class="rules-list" id="rulesList"></ul>
-    </div>
-
-    <div class="panel" id="myPanel" hidden>
-      <h2>Your squares</h2>
-      <div class="chips" id="myChips"></div>
-      <div class="total"><span>Still owed</span><b id="owed">$0</b></div>
-      <div class="paybtns" id="payBtns">
-        <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener">Venmo</a>
-        <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener">PayPal</a>
-      </div>
-      <span class="payweb" id="venmoWeb" hidden>Venmo app didn't open? <a id="venmoWebLink" target="_blank" rel="noopener">Pay on venmo.com</a></span>
-      <div class="handle" id="venmoRow"><span>Venmo</span><code id="venmoTxt"></code><button type="button" data-copy="venmoTxt">Copy</button></div>
-      <div class="handle" id="paypalRow"><span>PayPal</span><code id="paypalTxt"></code><button type="button" data-copy="paypalTxt">Copy</button></div>
-      <p class="note" id="payNote" style="margin-top:8px"></p>
     </div>
 
     <div class="panel">
@@ -753,6 +796,28 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
   <div class="big-body" id="bigBody"></div>
 </div>
 
+<div class="modal" id="maxModal" hidden>
+  <div class="modal-card max-card" role="alertdialog" aria-modal="true" aria-labelledby="maxTitle" aria-describedby="maxText">
+    <div class="max-icon" aria-hidden="true">8</div>
+    <h2 id="maxTitle">Maximum Reached</h2>
+    <p id="maxText">You've reached the maximum of 8 squares per player.</p>
+    <button class="btn" id="maxOk" type="button">OK</button>
+  </div>
+</div>
+<div class="modal" id="payModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+    <button class="sheet-x" id="payClose" type="button" aria-label="Close">×</button>
+    <div class="step"><span class="step-n" aria-hidden="true">3</span><div class="step-t"><small>Step Three</small><b id="payTitle">Make Your Payment</b></div></div>
+    <p id="payModalText" class="pay-modal-text"></p>
+    <div class="paybtns" id="payModalBtns">
+      <a class="btn venmo" id="pmVenmo" target="_blank" rel="noopener">Venmo</a>
+      <a class="btn paypal" id="pmPaypal" target="_blank" rel="noopener">PayPal</a>
+    </div>
+    <p class="note" id="payModalNote"></p>
+    <button class="btn ghost" id="payLater" type="button">I'll pay later</button>
+  </div>
+</div>
+
 <script>
 /* Google Apps Script backend: calls the functions in Code.gs through google.script.run. */
 window.SquaresBackend = (function () {
@@ -887,7 +952,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     period: store.get("sq_period") || "all",
     zoom: store.get("sq_zoom") || "fit",
     big: false, cfgDirty: false, scoresDirty: false, previewScheme: null,
-    style: { font: FONTS.some((f) => f[0] === savedStyle.font) ? savedStyle.font : "clean", color: COLORS.includes(savedStyle.color) ? savedStyle.color : "ink" },
+    style: { font: FONTS.some((f) => f[0] === savedStyle.font) ? savedStyle.font : "clean", color: COLORS.includes(savedStyle.color) ? savedStyle.color : "ink", emoji: "" },
   };
 
   // ---------- derived ----------
@@ -998,6 +1063,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
           btn.classList.add("taken", sq.paid ? "paid" : "unpaid"); if (sq.mine) btn.classList.add("mine");
           const n = el("span", "nm ff-" + (sq.font || "clean") + (sq.reserved ? " reserved" : "")), np = sq.reserved ? { short: "Reserved", init: "•••" } : nameParts(sq.name);
           n.append(el("span", "n-full", sq.name), el("span", "n-short", np.short), el("span", "n-init", np.init));
+          if (sq.emoji) { btn.classList.add("has-em"); btn.append(el("span", "em", sq.emoji)); }
           if (sq.color && sq.color !== "ink") n.style.setProperty("--pc", "var(--pc-" + sq.color + ")");
           const label = sq.paid ? "PAID" : (sq.mine && sq.expiresAt ? minsLeft(sq) + "m left" : "UNPAID");
           btn.append(n, el("span", "pd", label));
@@ -1091,15 +1157,24 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (inviteMode() && !S.st.me && !S.st.admin) { showMsg("claimMsg", "You need your invitation link to pick squares.", "err"); return; }
     if (!S.selected.has(id) && inviteMode() && S.st.me && !S.st.admin) {
       const max = maxOf(S.st.cfg), held = Object.values(live()).filter((s) => s.mine).length;
-      if (max && held + S.selected.size >= max) {
-        showMsg("claimMsg", held >= max ? "You already have the maximum of " + max + " squares." : "The limit is " + max + " squares per player. You can pick " + (max - held) + ".", "err");
-        $("claimMsg").scrollIntoView({ behavior: "smooth", block: "nearest" });
-        return;
-      }
+      if (max && held + S.selected.size >= max) { showMax(max, held); return; }
     }
     S.selected.has(id) ? S.selected.delete(id) : S.selected.add(id);
     hide("claimMsg"); renderBoard(); renderClaim();
   });
+
+  // ---------- "maximum reached" pop-up ----------
+  function showMax(max, held) {
+    $("maxTitle").textContent = "Maximum Reached";
+    $("maxText").textContent = held >= max
+      ? "You already have " + max + " squares, the most allowed per player."
+      : held ? "You have " + held + " square" + (held > 1 ? "s" : "") + " plus " + S.selected.size + " selected. That's the maximum of " + max + " squares per player."
+      : "You've reached the maximum of " + max + " squares per player.";
+    $("maxModal").querySelector(".max-icon").textContent = max;
+    $("maxModal").hidden = false; $("maxOk").focus();
+  }
+  $("maxOk").onclick = () => { $("maxModal").hidden = true; };
+  $("maxModal").addEventListener("click", (e) => { if (e.target === $("maxModal")) $("maxModal").hidden = true; });
 
   // ---------- names that fit small squares ----------
   function nameParts(name) {
@@ -1201,17 +1276,38 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (!inviteMode() || !me || me.revoked) return;
     S.styleDirty = true; clearTimeout(styleTimer);
     styleTimer = setTimeout(async () => {
-      try { await B.restyle(S.style); showMsg("claimMsg", "Font and color saved.", "ok"); }
-      catch (e) { showMsg("claimMsg", e.message, "err"); }
-      S.styleDirty = false;
+      try { await B.restyle(S.style); showMsg("claimMsg", "Your style is saved.", "ok"); }
+      catch (e) { showMsg("claimMsg", e.message, "err"); if (S.st && S.st.me) S.style.emoji = S.st.me.emoji || ""; }
+      S.styleDirty = false; renderPicker();
     }, 500);
   }
+  function renderEmojis() {
+    const box = $("emojiPick"), list = (S.st && S.st.emojis) || [], show = inviteMode() && !!(S.st && S.st.me) && list.length > 0;
+    $("emojiBox").hidden = !show; if (!show) return;
+    const taken = new Set(S.st.emojisTaken || []), key = list.join("") + "|" + [...taken].join("") + "|" + S.style.emoji;
+    if (box.dataset.key === key) return; box.dataset.key = key;
+    box.replaceChildren();
+    for (const e of list) {
+      const b = el("button", null, e); b.type = "button"; b.dataset.e = e;
+      const mine = S.style.emoji === e, gone = taken.has(e) && !mine;
+      b.setAttribute("aria-pressed", String(mine)); b.disabled = gone;
+      b.setAttribute("aria-label", e + (mine ? " (yours, tap to remove)" : gone ? " (taken)" : ""));
+      b.title = mine ? "Yours. Tap to remove." : gone ? "Taken by another player" : "Use this emoji";
+      box.append(b);
+    }
+  }
+  $("emojiPick").onclick = (e) => {
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    S.style.emoji = S.style.emoji === b.dataset.e ? "" : b.dataset.e; saveStyle();
+  };
   function renderPicker() {
+    renderEmojis();
+    $("pvEm").hidden = !S.style.emoji; $("pvEm").textContent = S.style.emoji || "";
     for (const b of $("fontPick").children) b.setAttribute("aria-pressed", String(b.dataset.f === S.style.font));
     for (const b of $("colorPick").children) b.setAttribute("aria-pressed", String(b.dataset.c === S.style.color));
     const pv = $("stylePv"); pv.className = "pv ff-" + S.style.font;
     pv.style.setProperty("--pc", "var(--pc-" + S.style.color + ")");
-    pv.textContent = inviteMode() ? ((S.st.me && S.st.me.name) || "You") : ($("myName").value.trim() || "You");
+    $("pvName").textContent = inviteMode() ? ((S.st.me && S.st.me.name) || "You") : ($("myName").value.trim() || "You");
     const mine = Object.values(live()).filter((s) => s.mine);
     $("applyStyle").hidden = inviteMode() || !mine.length || mine.every((s) => (s.font || "clean") === S.style.font && (s.color || "ink") === S.style.color);
   }
@@ -1253,11 +1349,16 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       const r = await B.claim(inviteMode() ? { cells: [...S.selected] } : { name, cells: [...S.selected], font: S.style.font, color: S.style.color });
       S.selected.clear();
       const hold = S.st.cfg.holdMinutes;
+      if (r.won.length) S.payPrompt = true;
       if (r.won.length && !r.lost.length) showMsg("claimMsg", "You claimed " + r.won.length + " square" + (r.won.length > 1 ? "s" : "") + ". Pay within " + hold + " minutes to keep them.", "ok");
       else if (r.won.length) showMsg("claimMsg", "Claimed " + r.won.length + ". " + r.lost.length + " were taken by someone else first. Pay within " + hold + " minutes to keep yours.", "err");
       else showMsg("claimMsg", "Those squares were taken by someone else first. Pick open ones and try again.", "err");
-    } catch (e) { showMsg("claimMsg", e.message, "err"); }
+    } catch (e) {
+      if (/maximum|limit/i.test(e.message)) { const max = maxOf(S.st.cfg); showMax(max, Object.values(live()).filter((x) => x.mine).length); }
+      else showMsg("claimMsg", e.message, "err");
+    }
     S.busy = false; renderAll();
+    if (S.payPrompt) { S.payPrompt = false; S.payWanted = Date.now(); if (tryPayModal()) return; }
     if (window.innerWidth < 960 && !$("myPanel").hidden) $("myPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     else if (window.innerWidth < 960 && !$("claimMsg").hidden) $("claimMsg").scrollIntoView({ behavior: "smooth", block: "center" });
   });
@@ -1275,7 +1376,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   }
   function renderMine() {
     const mineIds = Object.entries(live()).filter(([, s]) => s.mine).map(([id]) => id).sort();
-    $("myPanel").hidden = !mineIds.length; if (!mineIds.length) return;
+    $("myPanel").hidden = !mineIds.length; $("step3Empty").hidden = !!mineIds.length; if (!mineIds.length) return;
     const sqs = live(), cf = S.st.cfg, chips = $("myChips"); chips.replaceChildren();
     for (const id of mineIds) {
       const sq = sqs[id], ch = el("span", "chip" + (sq.paid ? " paid" : ""), pos(id));
@@ -1304,6 +1405,37 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       : !L.v && !L.p ? "The commissioner hasn't added a Venmo or PayPal account yet. Check back soon."
       : "Venmo fills in your square numbers for you. With PayPal, add \"" + unpaid.map(short).join(", ") + "\" in the note. The commissioner marks squares paid once the money arrives.";
   }
+  // Step 3 pop-up right after a claim: big buttons that open the Venmo or PayPal app
+  // The board refreshes a moment after a claim; open the pop-up once the new squares show up.
+  function tryPayModal() {
+    if (!S.payWanted) return false;
+    if (Date.now() - S.payWanted > 20000) { S.payWanted = 0; return false; }
+    const sqs = live();
+    if (!Object.values(sqs).some((x) => x.mine && !x.paid)) return false;
+    S.payWanted = 0; openPayModal(); return true;
+  }
+  function openPayModal() {
+    const sqs = live(), cf = S.st.cfg, unpaid = Object.keys(sqs).filter((id) => sqs[id].mine && !sqs[id].paid).sort();
+    if (!unpaid.length) return;
+    const owed = unpaid.length * cf.price, L = payLinks(owed, cf.title + " squares: " + unpaid.map(short).join(", "));
+    if (!L.venmo && !L.paypal) return;
+    $("payModalText").textContent = "You owe " + money(owed) + " for " + unpaid.length + " square" + (unpaid.length > 1 ? "s" : "") + ". Pay within " + cf.holdMinutes + " minutes to keep them.";
+    const v = $("pmVenmo"), p = $("pmPaypal");
+    v.hidden = !L.venmo; p.hidden = !L.paypal;
+    if (L.venmo) { v.href = isPhone ? L.venmoApp : L.venmo; v.textContent = "Pay " + money(owed) + " with Venmo"; }
+    if (L.paypal) { p.href = L.paypal; p.textContent = "Pay " + money(owed) + " with PayPal"; }
+    $("payModalBtns").classList.toggle("one", !(L.venmo && L.paypal));
+    $("payModalNote").textContent = isPhone ? "Tapping a button opens the app with the amount filled in." : "Opens Venmo or PayPal in a new tab with the amount filled in.";
+    $("payModal").hidden = false;
+    (L.venmo ? v : p).focus();
+  }
+  const closePay = () => { $("payModal").hidden = true; if (window.innerWidth < 960 && !$("myPanel").hidden) $("myPanel").scrollIntoView({ behavior: "smooth", block: "start" }); };
+  $("payClose").onclick = $("payLater").onclick = closePay;
+  $("pmVenmo").addEventListener("click", () => setTimeout(() => { $("payModal").hidden = true; }, 300));
+  $("pmPaypal").addEventListener("click", () => setTimeout(() => { $("payModal").hidden = true; }, 300));
+  $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });
+  document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if (!$("payModal").hidden) closePay(); if (!$("maxModal").hidden) $("maxModal").hidden = true; });
+
   document.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-copy]"); if (!b) return;
     const node = $(b.dataset.copy), t = node.textContent;
@@ -1493,7 +1625,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     const body = "Hi " + inv.name + ",\n\n" +
       "You're invited to pick squares in " + cf.title + ": " + cf.teamTop + " vs " + cf.teamSide + ". Squares are " + money(cf.price) + " each.\n\n" +
       "Your personal link:\n" + link + "\n\n" +
-      "This link is just for you. It's how the board knows your picks are yours, so please don't share it. Your name shows on the board as \"" + inv.name + "\". You can choose your own font and color.\n\n" +
+      "This link is just for you. It's how the board knows your picks are yours, so please don't share it. Your name shows on the board as \"" + inv.name + "\". You can choose your own emoji, font and color.\n\n" +
       "Squares are held for " + cf.holdMinutes + " minutes after you pick them" + (pays ? "; pay by " + pays + " from the board" : "") + " to keep them.\n\n" +
       "Good luck!";
     return { subject, body };
@@ -1534,6 +1666,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       }
       const top = el("div", "top");
       const nm = el("span", "nm3 ff-" + (inv.font || "clean"), inv.name);
+      if (inv.emoji) nm.prepend(inv.emoji + " ");
       if (inv.color && inv.color !== "ink") nm.style.color = "var(--pc-" + inv.color + ")";
       const meta = el("span", "meta" + (inv.revoked ? " off" : inv.sentAt ? " sent" : ""), inv.revoked ? "Turned off" : inv.sentAt ? "Sent " + fmtDate(inv.sentAt) : "Not sent");
       top.append(nm, meta);
@@ -1741,8 +1874,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     else $("offline").hidden = true;
     if (st) {
       S.st = st;
-      if (st.inviteOnly && st.me && !S.styleDirty) S.style = { font: st.me.font || "clean", color: st.me.color || "ink" };
-      renderAll();
+      if (st.inviteOnly && st.me && !S.styleDirty) S.style = { font: st.me.font || "clean", color: st.me.color || "ink", emoji: st.me.emoji || "" };
+      renderAll(); tryPayModal();
     }
   });
   setInterval(() => { if (!document.hidden && S.st) renderAll(); }, 20000); // countdowns + expiring holds

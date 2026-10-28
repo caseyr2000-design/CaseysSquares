@@ -146,7 +146,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     period: store.get("sq_period") || "all",
     zoom: store.get("sq_zoom") || "fit",
     big: false, cfgDirty: false, scoresDirty: false, previewScheme: null,
-    style: { font: FONTS.some((f) => f[0] === savedStyle.font) ? savedStyle.font : "clean", color: COLORS.includes(savedStyle.color) ? savedStyle.color : "ink" },
+    style: { font: FONTS.some((f) => f[0] === savedStyle.font) ? savedStyle.font : "clean", color: COLORS.includes(savedStyle.color) ? savedStyle.color : "ink", emoji: "" },
   };
 
   // ---------- derived ----------
@@ -257,6 +257,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
           btn.classList.add("taken", sq.paid ? "paid" : "unpaid"); if (sq.mine) btn.classList.add("mine");
           const n = el("span", "nm ff-" + (sq.font || "clean") + (sq.reserved ? " reserved" : "")), np = sq.reserved ? { short: "Reserved", init: "•••" } : nameParts(sq.name);
           n.append(el("span", "n-full", sq.name), el("span", "n-short", np.short), el("span", "n-init", np.init));
+          if (sq.emoji) { btn.classList.add("has-em"); btn.append(el("span", "em", sq.emoji)); }
           if (sq.color && sq.color !== "ink") n.style.setProperty("--pc", "var(--pc-" + sq.color + ")");
           const label = sq.paid ? "PAID" : (sq.mine && sq.expiresAt ? minsLeft(sq) + "m left" : "UNPAID");
           btn.append(n, el("span", "pd", label));
@@ -350,15 +351,24 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (inviteMode() && !S.st.me && !S.st.admin) { showMsg("claimMsg", "You need your invitation link to pick squares.", "err"); return; }
     if (!S.selected.has(id) && inviteMode() && S.st.me && !S.st.admin) {
       const max = maxOf(S.st.cfg), held = Object.values(live()).filter((s) => s.mine).length;
-      if (max && held + S.selected.size >= max) {
-        showMsg("claimMsg", held >= max ? "You already have the maximum of " + max + " squares." : "The limit is " + max + " squares per player. You can pick " + (max - held) + ".", "err");
-        $("claimMsg").scrollIntoView({ behavior: "smooth", block: "nearest" });
-        return;
-      }
+      if (max && held + S.selected.size >= max) { showMax(max, held); return; }
     }
     S.selected.has(id) ? S.selected.delete(id) : S.selected.add(id);
     hide("claimMsg"); renderBoard(); renderClaim();
   });
+
+  // ---------- "maximum reached" pop-up ----------
+  function showMax(max, held) {
+    $("maxTitle").textContent = "Maximum Reached";
+    $("maxText").textContent = held >= max
+      ? "You already have " + max + " squares, the most allowed per player."
+      : held ? "You have " + held + " square" + (held > 1 ? "s" : "") + " plus " + S.selected.size + " selected. That's the maximum of " + max + " squares per player."
+      : "You've reached the maximum of " + max + " squares per player.";
+    $("maxModal").querySelector(".max-icon").textContent = max;
+    $("maxModal").hidden = false; $("maxOk").focus();
+  }
+  $("maxOk").onclick = () => { $("maxModal").hidden = true; };
+  $("maxModal").addEventListener("click", (e) => { if (e.target === $("maxModal")) $("maxModal").hidden = true; });
 
   // ---------- names that fit small squares ----------
   function nameParts(name) {
@@ -460,17 +470,38 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (!inviteMode() || !me || me.revoked) return;
     S.styleDirty = true; clearTimeout(styleTimer);
     styleTimer = setTimeout(async () => {
-      try { await B.restyle(S.style); showMsg("claimMsg", "Font and color saved.", "ok"); }
-      catch (e) { showMsg("claimMsg", e.message, "err"); }
-      S.styleDirty = false;
+      try { await B.restyle(S.style); showMsg("claimMsg", "Your style is saved.", "ok"); }
+      catch (e) { showMsg("claimMsg", e.message, "err"); if (S.st && S.st.me) S.style.emoji = S.st.me.emoji || ""; }
+      S.styleDirty = false; renderPicker();
     }, 500);
   }
+  function renderEmojis() {
+    const box = $("emojiPick"), list = (S.st && S.st.emojis) || [], show = inviteMode() && !!(S.st && S.st.me) && list.length > 0;
+    $("emojiBox").hidden = !show; if (!show) return;
+    const taken = new Set(S.st.emojisTaken || []), key = list.join("") + "|" + [...taken].join("") + "|" + S.style.emoji;
+    if (box.dataset.key === key) return; box.dataset.key = key;
+    box.replaceChildren();
+    for (const e of list) {
+      const b = el("button", null, e); b.type = "button"; b.dataset.e = e;
+      const mine = S.style.emoji === e, gone = taken.has(e) && !mine;
+      b.setAttribute("aria-pressed", String(mine)); b.disabled = gone;
+      b.setAttribute("aria-label", e + (mine ? " (yours, tap to remove)" : gone ? " (taken)" : ""));
+      b.title = mine ? "Yours. Tap to remove." : gone ? "Taken by another player" : "Use this emoji";
+      box.append(b);
+    }
+  }
+  $("emojiPick").onclick = (e) => {
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    S.style.emoji = S.style.emoji === b.dataset.e ? "" : b.dataset.e; saveStyle();
+  };
   function renderPicker() {
+    renderEmojis();
+    $("pvEm").hidden = !S.style.emoji; $("pvEm").textContent = S.style.emoji || "";
     for (const b of $("fontPick").children) b.setAttribute("aria-pressed", String(b.dataset.f === S.style.font));
     for (const b of $("colorPick").children) b.setAttribute("aria-pressed", String(b.dataset.c === S.style.color));
     const pv = $("stylePv"); pv.className = "pv ff-" + S.style.font;
     pv.style.setProperty("--pc", "var(--pc-" + S.style.color + ")");
-    pv.textContent = inviteMode() ? ((S.st.me && S.st.me.name) || "You") : ($("myName").value.trim() || "You");
+    $("pvName").textContent = inviteMode() ? ((S.st.me && S.st.me.name) || "You") : ($("myName").value.trim() || "You");
     const mine = Object.values(live()).filter((s) => s.mine);
     $("applyStyle").hidden = inviteMode() || !mine.length || mine.every((s) => (s.font || "clean") === S.style.font && (s.color || "ink") === S.style.color);
   }
@@ -512,11 +543,16 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       const r = await B.claim(inviteMode() ? { cells: [...S.selected] } : { name, cells: [...S.selected], font: S.style.font, color: S.style.color });
       S.selected.clear();
       const hold = S.st.cfg.holdMinutes;
+      if (r.won.length) S.payPrompt = true;
       if (r.won.length && !r.lost.length) showMsg("claimMsg", "You claimed " + r.won.length + " square" + (r.won.length > 1 ? "s" : "") + ". Pay within " + hold + " minutes to keep them.", "ok");
       else if (r.won.length) showMsg("claimMsg", "Claimed " + r.won.length + ". " + r.lost.length + " were taken by someone else first. Pay within " + hold + " minutes to keep yours.", "err");
       else showMsg("claimMsg", "Those squares were taken by someone else first. Pick open ones and try again.", "err");
-    } catch (e) { showMsg("claimMsg", e.message, "err"); }
+    } catch (e) {
+      if (/maximum|limit/i.test(e.message)) { const max = maxOf(S.st.cfg); showMax(max, Object.values(live()).filter((x) => x.mine).length); }
+      else showMsg("claimMsg", e.message, "err");
+    }
     S.busy = false; renderAll();
+    if (S.payPrompt) { S.payPrompt = false; S.payWanted = Date.now(); if (tryPayModal()) return; }
     if (window.innerWidth < 960 && !$("myPanel").hidden) $("myPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     else if (window.innerWidth < 960 && !$("claimMsg").hidden) $("claimMsg").scrollIntoView({ behavior: "smooth", block: "center" });
   });
@@ -534,7 +570,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   }
   function renderMine() {
     const mineIds = Object.entries(live()).filter(([, s]) => s.mine).map(([id]) => id).sort();
-    $("myPanel").hidden = !mineIds.length; if (!mineIds.length) return;
+    $("myPanel").hidden = !mineIds.length; $("step3Empty").hidden = !!mineIds.length; if (!mineIds.length) return;
     const sqs = live(), cf = S.st.cfg, chips = $("myChips"); chips.replaceChildren();
     for (const id of mineIds) {
       const sq = sqs[id], ch = el("span", "chip" + (sq.paid ? " paid" : ""), pos(id));
@@ -563,6 +599,37 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       : !L.v && !L.p ? "The commissioner hasn't added a Venmo or PayPal account yet. Check back soon."
       : "Venmo fills in your square numbers for you. With PayPal, add \"" + unpaid.map(short).join(", ") + "\" in the note. The commissioner marks squares paid once the money arrives.";
   }
+  // Step 3 pop-up right after a claim: big buttons that open the Venmo or PayPal app
+  // The board refreshes a moment after a claim; open the pop-up once the new squares show up.
+  function tryPayModal() {
+    if (!S.payWanted) return false;
+    if (Date.now() - S.payWanted > 20000) { S.payWanted = 0; return false; }
+    const sqs = live();
+    if (!Object.values(sqs).some((x) => x.mine && !x.paid)) return false;
+    S.payWanted = 0; openPayModal(); return true;
+  }
+  function openPayModal() {
+    const sqs = live(), cf = S.st.cfg, unpaid = Object.keys(sqs).filter((id) => sqs[id].mine && !sqs[id].paid).sort();
+    if (!unpaid.length) return;
+    const owed = unpaid.length * cf.price, L = payLinks(owed, cf.title + " squares: " + unpaid.map(short).join(", "));
+    if (!L.venmo && !L.paypal) return;
+    $("payModalText").textContent = "You owe " + money(owed) + " for " + unpaid.length + " square" + (unpaid.length > 1 ? "s" : "") + ". Pay within " + cf.holdMinutes + " minutes to keep them.";
+    const v = $("pmVenmo"), p = $("pmPaypal");
+    v.hidden = !L.venmo; p.hidden = !L.paypal;
+    if (L.venmo) { v.href = isPhone ? L.venmoApp : L.venmo; v.textContent = "Pay " + money(owed) + " with Venmo"; }
+    if (L.paypal) { p.href = L.paypal; p.textContent = "Pay " + money(owed) + " with PayPal"; }
+    $("payModalBtns").classList.toggle("one", !(L.venmo && L.paypal));
+    $("payModalNote").textContent = isPhone ? "Tapping a button opens the app with the amount filled in." : "Opens Venmo or PayPal in a new tab with the amount filled in.";
+    $("payModal").hidden = false;
+    (L.venmo ? v : p).focus();
+  }
+  const closePay = () => { $("payModal").hidden = true; if (window.innerWidth < 960 && !$("myPanel").hidden) $("myPanel").scrollIntoView({ behavior: "smooth", block: "start" }); };
+  $("payClose").onclick = $("payLater").onclick = closePay;
+  $("pmVenmo").addEventListener("click", () => setTimeout(() => { $("payModal").hidden = true; }, 300));
+  $("pmPaypal").addEventListener("click", () => setTimeout(() => { $("payModal").hidden = true; }, 300));
+  $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });
+  document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if (!$("payModal").hidden) closePay(); if (!$("maxModal").hidden) $("maxModal").hidden = true; });
+
   document.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-copy]"); if (!b) return;
     const node = $(b.dataset.copy), t = node.textContent;
@@ -752,7 +819,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     const body = "Hi " + inv.name + ",\n\n" +
       "You're invited to pick squares in " + cf.title + ": " + cf.teamTop + " vs " + cf.teamSide + ". Squares are " + money(cf.price) + " each.\n\n" +
       "Your personal link:\n" + link + "\n\n" +
-      "This link is just for you. It's how the board knows your picks are yours, so please don't share it. Your name shows on the board as \"" + inv.name + "\". You can choose your own font and color.\n\n" +
+      "This link is just for you. It's how the board knows your picks are yours, so please don't share it. Your name shows on the board as \"" + inv.name + "\". You can choose your own emoji, font and color.\n\n" +
       "Squares are held for " + cf.holdMinutes + " minutes after you pick them" + (pays ? "; pay by " + pays + " from the board" : "") + " to keep them.\n\n" +
       "Good luck!";
     return { subject, body };
@@ -793,6 +860,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       }
       const top = el("div", "top");
       const nm = el("span", "nm3 ff-" + (inv.font || "clean"), inv.name);
+      if (inv.emoji) nm.prepend(inv.emoji + " ");
       if (inv.color && inv.color !== "ink") nm.style.color = "var(--pc-" + inv.color + ")";
       const meta = el("span", "meta" + (inv.revoked ? " off" : inv.sentAt ? " sent" : ""), inv.revoked ? "Turned off" : inv.sentAt ? "Sent " + fmtDate(inv.sentAt) : "Not sent");
       top.append(nm, meta);
@@ -1000,8 +1068,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     else $("offline").hidden = true;
     if (st) {
       S.st = st;
-      if (st.inviteOnly && st.me && !S.styleDirty) S.style = { font: st.me.font || "clean", color: st.me.color || "ink" };
-      renderAll();
+      if (st.inviteOnly && st.me && !S.styleDirty) S.style = { font: st.me.font || "clean", color: st.me.color || "ink", emoji: st.me.emoji || "" };
+      renderAll(); tryPayModal();
     }
   });
   setInterval(() => { if (!document.hidden && S.st) renderAll(); }, 20000); // countdowns + expiring holds

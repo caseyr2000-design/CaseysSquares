@@ -532,6 +532,41 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
   header.band .banner.stats-corner > .stats .stat b{font-size:11px}
   header.band .banner.stats-corner > .stats .stat small{font-size:7.5px;letter-spacing:.06em}
 }
+
+/* ---------- Steps 1-2-3 ---------- */
+.step{display:flex;align-items:flex-start;gap:11px;margin:20px 0 6px;padding-top:16px;border-top:1px solid var(--line)}
+.claim > .step:first-of-type,.claim > #whoBox + .step,.claim > #nameBox + .step{margin-top:14px}
+.step-n{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#1f9d48;color:#fff;font-family:var(--f-display);font-weight:900;font-size:19px;line-height:1;box-shadow:0 2px 0 #157a37,0 3px 8px rgba(31,157,72,.35)}
+.step-t{display:grid;gap:1px;min-width:0}
+.step-t small{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1f9d48}
+.step-t b{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);line-height:1.1}
+.step-t span{font-size:13px;color:var(--muted)}
+.mine-box{margin-top:6px}
+.mine-box .lbl{margin-top:8px}
+/* emoji picker */
+.emojis{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.emojis button{all:unset;box-sizing:border-box;display:grid;place-items:center;aspect-ratio:1;min-width:0;font-size:clamp(15px,1.5vw,20px);border:1px solid var(--line);border-radius:7px;background:var(--surface);cursor:pointer;line-height:1;transition:transform .08s}
+.emojis button:hover:not(:disabled){transform:scale(1.08);border-color:var(--turf)}
+.emojis button:focus-visible{outline:2px solid var(--turf);outline-offset:1px}
+.emojis button[aria-pressed="true"]{border:2px solid #1f9d48;background:color-mix(in srgb,#1f9d48 14%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,#1f9d48 30%,transparent)}
+.emojis button:disabled{opacity:.28;filter:grayscale(1);cursor:not-allowed}
+.emoji-note{margin:6px 0 0;font-size:12px}
+@media (max-width:600px){.emojis{gap:3px}.emojis button{font-size:18px;border-radius:6px}}
+.pv{display:inline-flex;flex-direction:column;align-items:center;gap:1px}
+.pv-em{font-size:1.25em;line-height:1}
+/* emoji on the board: emoji on top, name underneath */
+.cell .em{order:-1;font-size:max(12px,calc(var(--cell)*.30));line-height:1;margin-bottom:1px}
+.board.lvl-s .cell.has-em .pd,.board.lvl-i .cell.has-em .pd{display:none}
+.board.lvl-i .cell.has-em .nm{font-size:max(9px,calc(var(--cell)*.24))}
+.board.lvl-i .cell .em{font-size:max(11px,calc(var(--cell)*.34))}
+/* pop-ups */
+.max-card{text-align:center;max-width:380px}
+.max-card h2{padding-right:0}
+.max-icon{width:58px;height:58px;margin:4px auto 10px;border-radius:50%;display:grid;place-items:center;background:var(--danger);color:#fff;font-family:var(--f-display);font-weight:900;font-size:28px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.max-card p{font-size:15.5px;margin:0 0 4px}
+#payModal .step{border-top:0;padding-top:0;margin-top:0}
+.pay-modal-text{font-size:15.5px;margin:10px 0 2px}
+#payModal .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -587,39 +622,47 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
         <label for="myName">Name on your squares</label>
         <input id="myName" type="text" maxlength="24" placeholder="e.g. Casey R." autocomplete="nickname">
       </div>
+      <div class="step"><span class="step-n" aria-hidden="true">1</span><div class="step-t"><small>Step One</small><b>Make Your Squares Unique</b><span>Pick your emoji, font and color.</span></div></div>
       <div id="styleBox">
+      <div id="emojiBox" hidden>
+      <span class="lbl" id="emojiLbl">Emoji</span>
+      <div class="emojis" id="emojiPick" role="group" aria-labelledby="emojiLbl"></div>
+      <p class="note emoji-note">Each emoji belongs to one player. Greyed-out ones are taken.</p>
+      </div>
       <span class="lbl" id="fontLbl">Font</span>
       <div class="fonts" id="fontPick" role="group" aria-labelledby="fontLbl"></div>
       <span class="lbl" id="colorLbl">Color</span>
       <div class="swatches" id="colorPick" role="group" aria-labelledby="colorLbl"></div>
-      <div class="preview"><div class="pv" id="stylePv">You</div><span>How your name looks on the board</span></div>
+      <div class="preview"><div class="pv" id="stylePv"><span class="pv-em" id="pvEm" hidden></span><span id="pvName">You</span></div><span>How your squares look on the board</span></div>
       <button class="linkbtn" id="applyStyle" type="button" hidden>Apply this style to my squares</button>
-      <p class="note" id="styleNote" hidden>Your font and color show on all your squares. Changes save automatically.</p>
+      <p class="note" id="styleNote" hidden>Your emoji, font and color show on all your squares. Changes save automatically.</p>
       </div>
+      <div class="step"><span class="step-n" aria-hidden="true">2</span><div class="step-t"><small>Step Two</small><b>Select Your Squares</b><span>Tap open squares on the board, then claim them.</span></div></div>
       <div class="total"><span id="selCount">0 selected</span><b id="selTotal">$0</b></div>
       <button class="btn" id="claimBtn" disabled>Select squares on the board</button>
       <div id="claimMsg" class="msg" hidden></div>
       <p class="note" id="holdNote"></p>
+      <div class="step"><span class="step-n" aria-hidden="true">3</span><div class="step-t"><small>Step Three</small><b>Make Your Payment</b><span>Pay with Venmo or PayPal. The app opens for you.</span></div></div>
+      <p class="note" id="step3Empty">Your amount due shows here after you claim squares in Step 2.</p>
+      <div id="myPanel" class="mine-box" hidden>
+        <span class="lbl">Your squares</span>
+        <div class="chips" id="myChips"></div>
+        <div class="total"><span>Still owed</span><b id="owed">$0</b></div>
+        <div class="paybtns" id="payBtns">
+          <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener">Venmo</a>
+          <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener">PayPal</a>
+        </div>
+        <span class="payweb" id="venmoWeb" hidden>Venmo app didn't open? <a id="venmoWebLink" target="_blank" rel="noopener">Pay on venmo.com</a></span>
+        <div class="handle" id="venmoRow"><span>Venmo</span><code id="venmoTxt"></code><button type="button" data-copy="venmoTxt">Copy</button></div>
+        <div class="handle" id="paypalRow"><span>PayPal</span><code id="paypalTxt"></code><button type="button" data-copy="paypalTxt">Copy</button></div>
+        <p class="note" id="payNote" style="margin-top:8px"></p>
+      </div>
       <button class="btn reqbtn" id="reqBtn" type="button" hidden>Request an Invitation</button>
     </div>
 
     <div class="panel rules" id="rulesPanel">
       <h2>Rules</h2>
       <ul class="rules-list" id="rulesList"></ul>
-    </div>
-
-    <div class="panel" id="myPanel" hidden>
-      <h2>Your squares</h2>
-      <div class="chips" id="myChips"></div>
-      <div class="total"><span>Still owed</span><b id="owed">$0</b></div>
-      <div class="paybtns" id="payBtns">
-        <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener">Venmo</a>
-        <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener">PayPal</a>
-      </div>
-      <span class="payweb" id="venmoWeb" hidden>Venmo app didn't open? <a id="venmoWebLink" target="_blank" rel="noopener">Pay on venmo.com</a></span>
-      <div class="handle" id="venmoRow"><span>Venmo</span><code id="venmoTxt"></code><button type="button" data-copy="venmoTxt">Copy</button></div>
-      <div class="handle" id="paypalRow"><span>PayPal</span><code id="paypalTxt"></code><button type="button" data-copy="paypalTxt">Copy</button></div>
-      <p class="note" id="payNote" style="margin-top:8px"></p>
     </div>
 
     <div class="panel">
@@ -756,7 +799,29 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
   <div class="big-body" id="bigBody"></div>
 </div>
 
-<script src="config.js?v=1e1b0f55"></script>
-<script src="app.js?v=1e1b0f55"></script>
+<div class="modal" id="maxModal" hidden>
+  <div class="modal-card max-card" role="alertdialog" aria-modal="true" aria-labelledby="maxTitle" aria-describedby="maxText">
+    <div class="max-icon" aria-hidden="true">8</div>
+    <h2 id="maxTitle">Maximum Reached</h2>
+    <p id="maxText">You've reached the maximum of 8 squares per player.</p>
+    <button class="btn" id="maxOk" type="button">OK</button>
+  </div>
+</div>
+<div class="modal" id="payModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+    <button class="sheet-x" id="payClose" type="button" aria-label="Close">×</button>
+    <div class="step"><span class="step-n" aria-hidden="true">3</span><div class="step-t"><small>Step Three</small><b id="payTitle">Make Your Payment</b></div></div>
+    <p id="payModalText" class="pay-modal-text"></p>
+    <div class="paybtns" id="payModalBtns">
+      <a class="btn venmo" id="pmVenmo" target="_blank" rel="noopener">Venmo</a>
+      <a class="btn paypal" id="pmPaypal" target="_blank" rel="noopener">PayPal</a>
+    </div>
+    <p class="note" id="payModalNote"></p>
+    <button class="btn ghost" id="payLater" type="button">I'll pay later</button>
+  </div>
+</div>
+
+<script src="config.js?v=91ef3046"></script>
+<script src="app.js?v=91ef3046"></script>
 </body>
 </html>

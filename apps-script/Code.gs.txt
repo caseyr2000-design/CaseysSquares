@@ -20,6 +20,7 @@ var IMG_SLOTS = ['logoTop', 'logoSide', 'header'];
 // Picture slots on the extra pages (Odds, Hot Squares, Yearly Winners, Hall of Fame), e.g. 'hot-liii', 'yw-2019'.
 var PAGE_SLOT_RE = /^(odds|hot|yw|hof|pay)-[a-z0-9]{1,12}$/;
 function validSlot_(slot) { return IMG_SLOTS.indexOf(slot) >= 0 || PAGE_SLOT_RE.test(String(slot)); }
+var EMOJIS = ['🏈', '🏆', '🔥', '⚡', '🍀', '💰', '👑', '🎯', '🚀', '😎', '🤠', '🦅', '🐻', '🦁', '🐯', '🦈', '🐺', '🐴', '🍕', '🌮'];
 var CELL_RE = /^r[0-9]c[0-9]$/;
 var DEFAULT_CFG = {
   title: 'Sunday Night Squares', teamTop: 'Home', teamSide: 'Away', price: 10, holdMinutes: 60,
@@ -157,6 +158,7 @@ function getState(playerToken, adminToken) {
     // A player's name shows to everyone once the square is paid; until then only they and the commissioner see it.
     var hide = !s.paid && !mine && !admin;
     out[id] = {
+      emoji: hide ? '' : (who && who.emoji) || '',
       name: hide ? 'Reserved' : (who ? who.name : (s.name || 'Player')), font: hide ? 'clean' : (who ? who.font : s.font), color: hide ? 'ink' : (who ? who.color : s.color),
       reserved: hide, paid: !!s.paid, claimedAt: s.claimedAt,
       owner: hide ? 'r' : (s.iid != null ? 'i' + s.iid : 'p' + s.pid), mine: mine,
@@ -165,13 +167,15 @@ function getState(playerToken, adminToken) {
   }
   var res = {
     cfg: publicCfg_(cfg), admin: admin, squares: out, canClaim: !!me && !me.revoked, canUpload: admin, inviteOnly: true,
-    me: me ? { name: me.name, font: me.font, color: me.color, revoked: !!me.revoked } : null
+    me: me ? { name: me.name, font: me.font, color: me.color, emoji: me.emoji || '', revoked: !!me.revoked } : null,
+    emojis: EMOJIS, emojisTaken: Object.keys(inv).map(function (k) { return inv[k]; })
+      .filter(function (v) { return v.emoji && !(me && v.id === me.id); }).map(function (v) { return v.emoji; })
   };
   if (admin) {
     res.appUrl = ScriptApp.getService().getUrl();
     res.invites = Object.keys(inv).map(function (k) {
       var v = inv[k], c = counts[v.id] || { squares: 0, paid: 0 };
-      return { id: v.id, token: v.token, name: v.name, email: v.email, font: v.font, color: v.color,
+      return { id: v.id, token: v.token, name: v.name, email: v.email, font: v.font, color: v.color, emoji: v.emoji || '',
         createdAt: v.createdAt, sentAt: v.sentAt || null, revoked: !!v.revoked, squares: c.squares, paid: c.paid };
     });
     res.requests = [];
@@ -238,6 +242,15 @@ function restyle(playerToken, style) {
     if (!me) fail_('You need an invitation link to change your style.');
     if (me.revoked) fail_('Your invitation has been turned off.');
     me.font = pick_(style.font, FONTS, 'clean'); me.color = pick_(style.color, COLORS, 'ink');
+    if (style.emoji !== undefined) {
+      var em = String(style.emoji || '');
+      if (em && EMOJIS.indexOf(em) < 0) fail_('Pick one of the emojis shown.');
+      if (em) {
+        var others = invites_(props_().getProperties());
+        for (var k in others) if (others[k].id !== me.id && others[k].emoji === em) fail_('Another player just took that emoji. Pick a different one.');
+      }
+      me.emoji = em;
+    }
     props_().setProperty('inv:' + me.id, JSON.stringify(me));
     return true;
   });
