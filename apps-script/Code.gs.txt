@@ -14,7 +14,8 @@
 var QUARTERS = ['q1', 'q2', 'q3', 'final'];
 var FONTS = ['clean', 'readable', 'stadium', 'handwritten', 'cursive', 'varsity', 'marker', 'slab', 'mono'];
 var COLORS = ['ink', 'red', 'orange', 'gold', 'green', 'teal', 'blue', 'purple', 'pink'];
-var SCHEMES = ['turf', 'black', 'blue', 'white', 'blackblue', 'bluewhite', 'crimson', 'purple'];
+var SCHEMES = ['turf', 'black', 'blue', 'white', 'blackblue', 'bluewhite', 'crimson', 'purple',
+  'slatemint', 'navycoral', 'graphite', 'oceansand', 'terracotta', 'sageclay', 'desert', 'oliverust', 'espresso'];
 var IMG_SLOTS = ['logoTop', 'logoSide', 'header'];
 // Picture slots on the extra pages (Odds, Hot Squares, Yearly Winners, Hall of Fame), e.g. 'hot-liii', 'yw-2019'.
 var PAGE_SLOT_RE = /^(odds|hot|yw|hof)-[a-z0-9]{1,12}$/;
@@ -31,7 +32,8 @@ var DEFAULT_CFG = {
     'Payments accepted via Venmo or PayPal',
     'Numbers are randomized on Super Bowl Sunday',
     'Winnings paid within 24 hours of the end of the game',
-    'If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted'
+    'If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted',
+    'Have Fun & Good Luck'
   ]
 };
 
@@ -76,6 +78,8 @@ function getCfg_(all) {
   for (var k in saved) cfg[k] = saved[k];
   cfg.payouts = Object.assign({}, DEFAULT_CFG.payouts, cfg.payouts || {});
   cfg.images = cfg.images || {};
+  // Rules saved before "Have Fun & Good Luck" was added (and never edited) follow the current default list.
+  if (Array.isArray(cfg.rules) && JSON.stringify(cfg.rules) === JSON.stringify(DEFAULT_CFG.rules.slice(0, 6))) cfg.rules = DEFAULT_CFG.rules.slice();
   return cfg;
 }
 function saveCfg_(cfg) { props_().setProperty('cfg', JSON.stringify(cfg)); }

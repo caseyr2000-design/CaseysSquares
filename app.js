@@ -115,7 +115,7 @@ window.SquaresBackend = (function () {
   };
 })();
 
-window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#f5c451", "#1f5a37"]}, {"key": "black", "label": "Black", "sw": ["#000000", "#ffffff", "#5c5c5c"]}, {"key": "blue", "label": "Blue", "sw": ["#0b2a6b", "#ffffff", "#1a56db"]}, {"key": "white", "label": "White", "sw": ["#ffffff", "#111111", "#dcdcdc"]}, {"key": "blackblue", "label": "Black & Blue", "sw": ["#000000", "#4d8dff", "#ffffff"]}, {"key": "bluewhite", "label": "Blue & White", "sw": ["#0b2a6b", "#ffffff", "#1a56db"]}, {"key": "crimson", "label": "Crimson", "sw": ["#6b0f1a", "#ffffff", "#b3141f"]}, {"key": "purple", "label": "Purple & Gold", "sw": ["#2e1065", "#ffd166", "#6d28d9"]}];
+window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#f5c451", "#1f5a37"]}, {"key": "black", "label": "Black", "sw": ["#000000", "#ffffff", "#5c5c5c"]}, {"key": "blue", "label": "Blue", "sw": ["#0b2a6b", "#ffffff", "#1a56db"]}, {"key": "white", "label": "White", "sw": ["#ffffff", "#111111", "#dcdcdc"]}, {"key": "blackblue", "label": "Black & Blue", "sw": ["#000000", "#4d8dff", "#ffffff"]}, {"key": "bluewhite", "label": "Blue & White", "sw": ["#0b2a6b", "#ffffff", "#1a56db"]}, {"key": "crimson", "label": "Crimson", "sw": ["#6b0f1a", "#ffffff", "#b3141f"]}, {"key": "purple", "label": "Purple & Gold", "sw": ["#2e1065", "#ffd166", "#6d28d9"]}, {"key": "slatemint", "label": "Slate & Mint", "sw": ["#1e293b", "#5eead4", "#0f766e"]}, {"key": "navycoral", "label": "Midnight & Coral", "sw": ["#14213d", "#ff8a7a", "#d9472f"]}, {"key": "graphite", "label": "Graphite & Orange", "sw": ["#1f1f23", "#fb923c", "#c2410c"]}, {"key": "oceansand", "label": "Ocean & Sand", "sw": ["#0f4c5c", "#f4d58d", "#0e7490"]}, {"key": "terracotta", "label": "Terracotta", "sw": ["#7a3b22", "#f2c48d", "#b5532a"]}, {"key": "sageclay", "label": "Sage & Clay", "sw": ["#4a5d4f", "#e0b48a", "#5f7a61"]}, {"key": "desert", "label": "Desert Sand", "sw": ["#5c4630", "#f0d9b5", "#a0703c"]}, {"key": "oliverust", "label": "Olive & Rust", "sw": ["#3f4a1e", "#e07a3f", "#556b2f"]}, {"key": "espresso", "label": "Espresso & Cream", "sw": ["#2b1d17", "#f1dfc4", "#7b4a2e"]}];
 /* Gridiron Squares — board UI. Talks to window.SquaresBackend (the claude.ai
    artifact store in the prototype, the Node server in the deployable site). */
 (function () {
@@ -908,6 +908,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     "Numbers are randomized on Super Bowl Sunday",
     "Winnings paid within 24 hours of the end of the game",
     "If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted",
+    "Have Fun & Good Luck",
   ];
   const rulesOf = (cf) => (Array.isArray(cf.rules) ? cf.rules : DEFAULT_RULES);
   const maxOf = (cf) => (cf.maxPerPlayer == null ? DEFAULT_MAX : Number(cf.maxPerPlayer) || 0);
