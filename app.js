@@ -24,7 +24,10 @@ window.SquaresBackend = (function () {
 
   function withImages(st) {
     const urls = {};
+    // Only fetch the pictures this page shows (header, logos, plus any the page asks for).
+    const want = new Set(["logoTop", "logoSide", "header"].concat(window.SQUARES_WANT_IMAGES || []));
     for (const [slot, ver] of Object.entries(st.cfg.images || {})) {
+      if (!want.has(slot)) continue;
       if (imgVer[slot] === ver && imgData[slot]) urls[slot] = imgData[slot];
       else if (imgLoading[slot] !== ver) {
         imgLoading[slot] = ver;
@@ -729,6 +732,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
 
   // login (deployable site only)
   $("showLogin").onclick = () => { $("loginPanel").hidden = false; $("adminPw").focus(); };
+  if (location.hash === "#login") setTimeout(() => { if ($("adminPanel").hidden) { $("loginPanel").hidden = false; $("loginPanel").scrollIntoView({ block: "center" }); $("adminPw").focus(); } }, 1200);
   $("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     try { await B.login($("adminPw").value); $("adminPw").value = ""; hide("loginMsg"); }
@@ -884,6 +888,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (statsIn && stats.parentElement !== banner) banner.append(stats);
     else if (!statsIn && stats.parentElement === banner) wrap.append(stats);
     $("band").classList.toggle("stats-in-banner", statsIn);
+    $("band").classList.toggle("hero-in-banner", hero.parentElement === banner);
   }
   window.addEventListener("resize", placeHero);
   $("bannerImg").addEventListener("load", placeHero);

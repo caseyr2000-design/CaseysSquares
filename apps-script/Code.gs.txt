@@ -16,6 +16,9 @@ var FONTS = ['clean', 'readable', 'stadium', 'handwritten', 'cursive', 'varsity'
 var COLORS = ['ink', 'red', 'orange', 'gold', 'green', 'teal', 'blue', 'purple', 'pink'];
 var SCHEMES = ['turf', 'black', 'blue', 'white', 'blackblue', 'bluewhite', 'crimson', 'purple'];
 var IMG_SLOTS = ['logoTop', 'logoSide', 'header'];
+// Picture slots on the extra pages (Odds, Hot Squares, Yearly Winners, Hall of Fame), e.g. 'hot-liii', 'yw-2019'.
+var PAGE_SLOT_RE = /^(odds|hot|yw|hof)-[a-z0-9]{1,12}$/;
+function validSlot_(slot) { return IMG_SLOTS.indexOf(slot) >= 0 || PAGE_SLOT_RE.test(String(slot)); }
 var CELL_RE = /^r[0-9]c[0-9]$/;
 var DEFAULT_CFG = {
   title: 'Sunday Night Squares', teamTop: 'Home', teamSide: 'Away', price: 10, holdMinutes: 60,
@@ -235,7 +238,7 @@ function restyle(playerToken, style) {
 }
 
 function getImage(slot) {
-  if (IMG_SLOTS.indexOf(slot) < 0) return null;
+  if (!validSlot_(slot)) return null;
   var cfg = getCfg_(), fileId = (cfg.imageFiles || {})[slot];
   if (!fileId) return null;
   var cache = CacheService.getScriptCache(), key = 'img:' + slot + ':' + cfg.images[slot];
@@ -362,7 +365,9 @@ function imageFolder_() {
 
 function uploadImage(adminToken, slot, base64, mime) {
   requireAdmin_(adminToken);
-  if (IMG_SLOTS.indexOf(slot) < 0) fail_('Unknown image slot.');
+  if (!validSlot_(slot)) fail_('Unknown image slot.');
+  var cfgNow = getCfg_();
+  if (!cfgNow.images[slot] && Object.keys(cfgNow.images).length >= 60) fail_('Picture limit reached. Remove one first.');
   var bytes = Utilities.base64Decode(String(base64 || ''));
   if (bytes.length > 4 * 1024 * 1024) fail_('That image is too large.');
   var b = function (i) { return (bytes[i] + 256) % 256; };
