@@ -303,6 +303,7 @@ table.yw .slot-acts .tog{font-size:12px;padding:4px 8px}
 .sitenav a:hover{background:rgba(255,255,255,.08)}
 .sitenav a[aria-current="page"]{border-bottom-color:#f5c451;color:#fff}
 .sitenav a:focus-visible{outline:3px solid #f5c451;outline-offset:2px}
+.sitenav a[href="payments.html"],.sitenav a[href="payments.html"][aria-current="page"]{color:#ff8c1a}
 @media (max-width:600px){.sitenav{gap:0 4px;padding-block:6px}.sitenav a{font-size:14px;padding:8px 7px}}
 .banner.layout-left{max-width:none}
 .banner.layout-left img{object-fit:contain;height:clamp(170px,26vw,400px);width:100%;max-height:none}
