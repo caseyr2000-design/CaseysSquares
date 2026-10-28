@@ -20,7 +20,8 @@ var IMG_SLOTS = ['logoTop', 'logoSide', 'header'];
 // Picture slots on the extra pages (Odds, Hot Squares, Yearly Winners, Hall of Fame), e.g. 'hot-liii', 'yw-2019'.
 var PAGE_SLOT_RE = /^(odds|hot|yw|hof|pay)-[a-z0-9]{1,12}$/;
 function validSlot_(slot) { return IMG_SLOTS.indexOf(slot) >= 0 || PAGE_SLOT_RE.test(String(slot)); }
-var EMOJIS = ['🏈', '🏆', '🔥', '⚡', '🍀', '💰', '👑', '🎯', '🚀', '😎', '🤠', '🦅', '🐻', '🦁', '🐯', '🦈', '🐺', '🐴', '🍕', '🌮'];
+var EMOJIS = ['🏈', '🏆', '🔥', '⚡', '🍀', '💰', '👑', '🎯', '🚀', '😎', '🤠', '🦅', '🐻', '🦁', '🐯', '🦈', '🐺', '🐴', '🍕', '🌮',
+  '💩', '😀', '😁', '😂', '🤣', '😉', '😜', '🤪', '😍', '🥳', '🤩', '😇', '🤑', '😤', '😱', '🤓', '🧐', '😴', '🤯', '🙃'];
 var CELL_RE = /^r[0-9]c[0-9]$/;
 var DEFAULT_CFG = {
   title: 'Sunday Night Squares', teamTop: 'Home', teamSide: 'Away', price: 10, holdMinutes: 60,
@@ -32,6 +33,7 @@ var DEFAULT_CFG = {
     'Squares are not owned until paid',
     'Payments accepted via Venmo or PayPal',
     'Numbers are randomized on Super Bowl Sunday',
+    'Numbers Are Randomized for Each Quarter',
     'Winnings paid within 24 hours of the end of the game',
     'If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted',
     'Have Fun & Good Luck'
@@ -79,8 +81,12 @@ function getCfg_(all) {
   for (var k in saved) cfg[k] = saved[k];
   cfg.payouts = Object.assign({}, DEFAULT_CFG.payouts, cfg.payouts || {});
   cfg.images = cfg.images || {};
-  // Rules saved before "Have Fun & Good Luck" was added (and never edited) follow the current default list.
-  if (Array.isArray(cfg.rules) && JSON.stringify(cfg.rules) === JSON.stringify(DEFAULT_CFG.rules.slice(0, 6))) cfg.rules = DEFAULT_CFG.rules.slice();
+  // Rules saved from an earlier default list (and never edited) follow the current default list.
+  if (Array.isArray(cfg.rules)) {
+    var oldDefault = DEFAULT_CFG.rules.filter(function (r) { return r !== 'Numbers Are Randomized for Each Quarter' && r !== 'Have Fun & Good Luck'; });
+    var saved = JSON.stringify(cfg.rules);
+    if (saved === JSON.stringify(oldDefault) || saved === JSON.stringify(oldDefault.concat(['Have Fun & Good Luck']))) cfg.rules = DEFAULT_CFG.rules.slice();
+  }
   return cfg;
 }
 function saveCfg_(cfg) { props_().setProperty('cfg', JSON.stringify(cfg)); }

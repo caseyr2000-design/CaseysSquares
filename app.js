@@ -552,7 +552,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       else showMsg("claimMsg", e.message, "err");
     }
     S.busy = false; renderAll();
-    if (S.payPrompt) { S.payPrompt = false; S.payWanted = Date.now(); if (tryPayModal()) return; }
+    if (S.payPrompt) { S.payPrompt = false; S.payWanted = Date.now(); tryShowPay(); if (!S.payWanted) return; }
     if (window.innerWidth < 960 && !$("myPanel").hidden) $("myPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     else if (window.innerWidth < 960 && !$("claimMsg").hidden) $("claimMsg").scrollIntoView({ behavior: "smooth", block: "center" });
   });
@@ -589,9 +589,10 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     const L = payLinks(owed, note);
     const vb = $("venmoBtn"), pb = $("paypalBtn");
     vb.hidden = !L.venmo || !unpaid.length; pb.hidden = !L.paypal || !unpaid.length;
-    if (L.venmo) { vb.href = isPhone ? L.venmoApp : L.venmo; vb.textContent = "Pay " + money(owed) + " · Venmo"; $("venmoWebLink").href = L.venmo; }
+    if (L.venmo) { vb.href = isPhone ? L.venmoApp : L.venmo; vb.setAttribute("aria-label", "Pay " + money(owed) + " with Venmo"); $("venmoWebLink").href = L.venmo; }
     $("venmoWeb").hidden = !(isPhone && L.venmo && unpaid.length);
-    if (L.paypal) { pb.href = L.paypal; pb.textContent = "Pay " + money(owed) + " · PayPal"; }
+    if (L.paypal) { pb.href = L.paypal; pb.setAttribute("aria-label", "Pay " + money(owed) + " with PayPal"); }
+    $("payWith").hidden = !unpaid.length || !(L.venmo || L.paypal);
     $("payBtns").classList.toggle("one", !(L.venmo && L.paypal));
     $("venmoRow").hidden = !L.v; $("venmoTxt").textContent = L.v ? "@" + L.v : "";
     $("paypalRow").hidden = !L.p; $("paypalTxt").textContent = L.p ? "paypal.me/" + L.p : "";
@@ -600,35 +601,16 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       : "Venmo fills in your square numbers for you. With PayPal, add \"" + unpaid.map(short).join(", ") + "\" in the note. The commissioner marks squares paid once the money arrives.";
   }
   // Step 3 pop-up right after a claim: big buttons that open the Venmo or PayPal app
-  // The board refreshes a moment after a claim; open the pop-up once the new squares show up.
-  function tryPayModal() {
-    if (!S.payWanted) return false;
-    if (Date.now() - S.payWanted > 20000) { S.payWanted = 0; return false; }
-    const sqs = live();
-    if (!Object.values(sqs).some((x) => x.mine && !x.paid)) return false;
-    S.payWanted = 0; openPayModal(); return true;
+  // After a claim, bring Step 3 (Pay With Venmo / PayPal) into view once the new squares show up.
+  function tryShowPay() {
+    if (!S.payWanted) return;
+    if (Date.now() - S.payWanted > 20000) { S.payWanted = 0; return; }
+    if (!Object.values(live()).some((x) => x.mine && !x.paid)) return;
+    S.payWanted = 0;
+    const box = $("payBtns"); box.classList.remove("flash"); void box.offsetWidth; box.classList.add("flash");
+    $("step3").scrollIntoView({ behavior: "smooth", block: window.innerWidth < 960 ? "start" : "nearest" });
   }
-  function openPayModal() {
-    const sqs = live(), cf = S.st.cfg, unpaid = Object.keys(sqs).filter((id) => sqs[id].mine && !sqs[id].paid).sort();
-    if (!unpaid.length) return;
-    const owed = unpaid.length * cf.price, L = payLinks(owed, cf.title + " squares: " + unpaid.map(short).join(", "));
-    if (!L.venmo && !L.paypal) return;
-    $("payModalText").textContent = "You owe " + money(owed) + " for " + unpaid.length + " square" + (unpaid.length > 1 ? "s" : "") + ". Pay within " + cf.holdMinutes + " minutes to keep them.";
-    const v = $("pmVenmo"), p = $("pmPaypal");
-    v.hidden = !L.venmo; p.hidden = !L.paypal;
-    if (L.venmo) { v.href = isPhone ? L.venmoApp : L.venmo; v.textContent = "Pay " + money(owed) + " with Venmo"; }
-    if (L.paypal) { p.href = L.paypal; p.textContent = "Pay " + money(owed) + " with PayPal"; }
-    $("payModalBtns").classList.toggle("one", !(L.venmo && L.paypal));
-    $("payModalNote").textContent = isPhone ? "Tapping a button opens the app with the amount filled in." : "Opens Venmo or PayPal in a new tab with the amount filled in.";
-    $("payModal").hidden = false;
-    (L.venmo ? v : p).focus();
-  }
-  const closePay = () => { $("payModal").hidden = true; if (window.innerWidth < 960 && !$("myPanel").hidden) $("myPanel").scrollIntoView({ behavior: "smooth", block: "start" }); };
-  $("payClose").onclick = $("payLater").onclick = closePay;
-  $("pmVenmo").addEventListener("click", () => setTimeout(() => { $("payModal").hidden = true; }, 300));
-  $("pmPaypal").addEventListener("click", () => setTimeout(() => { $("payModal").hidden = true; }, 300));
-  $("payModal").addEventListener("click", (e) => { if (e.target === $("payModal")) closePay(); });
-  document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; if (!$("payModal").hidden) closePay(); if (!$("maxModal").hidden) $("maxModal").hidden = true; });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("maxModal").hidden) $("maxModal").hidden = true; });
 
   document.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-copy]"); if (!b) return;
@@ -974,6 +956,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     "Squares are not owned until paid",
     "Payments accepted via Venmo or PayPal",
     "Numbers are randomized on Super Bowl Sunday",
+    "Numbers Are Randomized for Each Quarter",
     "Winnings paid within 24 hours of the end of the game",
     "If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted",
     "Have Fun & Good Luck",
@@ -1069,7 +1052,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (st) {
       S.st = st;
       if (st.inviteOnly && st.me && !S.styleDirty) S.style = { font: st.me.font || "clean", color: st.me.color || "ink", emoji: st.me.emoji || "" };
-      renderAll(); tryPayModal();
+      renderAll(); tryShowPay();
     }
   });
   setInterval(() => { if (!document.hidden && S.st) renderAll(); }, 20000); // countdowns + expiring holds

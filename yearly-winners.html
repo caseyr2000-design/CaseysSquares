@@ -566,6 +566,17 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
 #payModal .step{border-top:0;padding-top:0;margin-top:0}
 .pay-modal-text{font-size:15.5px;margin:10px 0 2px}
 #payModal .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+
+/* Step 3: "Pay With" + side-by-side Venmo / PayPal buttons (also on phones) */
+.paywith{margin-top:12px}
+.paywith-lbl{display:block;font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+.paywith .paybtns,.paywith .paybtns.one{grid-template-columns:1fr 1fr;gap:10px}
+.paywith .paybtns .btn{margin-top:0;font-size:17px;font-weight:800;letter-spacing:.02em;padding:13px 10px;border-radius:8px}
+.paywith .paybtns .btn[hidden]{display:none}
+.paywith .paybtns.one .btn{grid-column:1 / -1}
+.paybtns.flash{animation:payflash 1.2s ease-out 2}
+@keyframes payflash{0%{box-shadow:0 0 0 0 rgba(31,157,72,.55);border-radius:10px}100%{box-shadow:0 0 0 14px rgba(31,157,72,0);border-radius:10px}}
+@media (max-width:600px){.paywith .paybtns{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body data-page="yw">
@@ -594,7 +605,7 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
 <p class="admin-note" id="adminHint">Commissioner? <a href="index.html#login">Log in on the Home page</a> to edit this page.</p>
 </main>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Picture"><button class="sheet-x" id="viewerClose" type="button" aria-label="Close">×</button><figure><img id="viewerImg" alt=""><figcaption id="viewerCap"></figcaption></figure></div>
-<script src="config.js?v=b423fc5f"></script>
-<script src="site.js?v=b423fc5f"></script>
+<script src="config.js?v=1e97b293"></script>
+<script src="site.js?v=1e97b293"></script>
 </body>
 </html>

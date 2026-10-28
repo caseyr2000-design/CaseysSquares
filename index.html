@@ -567,6 +567,17 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
 #payModal .step{border-top:0;padding-top:0;margin-top:0}
 .pay-modal-text{font-size:15.5px;margin:10px 0 2px}
 #payModal .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+
+/* Step 3: "Pay With" + side-by-side Venmo / PayPal buttons (also on phones) */
+.paywith{margin-top:12px}
+.paywith-lbl{display:block;font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+.paywith .paybtns,.paywith .paybtns.one{grid-template-columns:1fr 1fr;gap:10px}
+.paywith .paybtns .btn{margin-top:0;font-size:17px;font-weight:800;letter-spacing:.02em;padding:13px 10px;border-radius:8px}
+.paywith .paybtns .btn[hidden]{display:none}
+.paywith .paybtns.one .btn{grid-column:1 / -1}
+.paybtns.flash{animation:payflash 1.2s ease-out 2}
+@keyframes payflash{0%{box-shadow:0 0 0 0 rgba(31,157,72,.55);border-radius:10px}100%{box-shadow:0 0 0 14px rgba(31,157,72,0);border-radius:10px}}
+@media (max-width:600px){.paywith .paybtns{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -642,15 +653,18 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
       <button class="btn" id="claimBtn" disabled>Select squares on the board</button>
       <div id="claimMsg" class="msg" hidden></div>
       <p class="note" id="holdNote"></p>
-      <div class="step"><span class="step-n" aria-hidden="true">3</span><div class="step-t"><small>Step Three</small><b>Make Your Payment</b><span>Pay with Venmo or PayPal. The app opens for you.</span></div></div>
+      <div class="step" id="step3"><span class="step-n" aria-hidden="true">3</span><div class="step-t"><small>Step Three</small><b>Make Your Payment</b><span>Pay with Venmo or PayPal. The app opens for you.</span></div></div>
       <p class="note" id="step3Empty">Your amount due shows here after you claim squares in Step 2.</p>
       <div id="myPanel" class="mine-box" hidden>
         <span class="lbl">Your squares</span>
         <div class="chips" id="myChips"></div>
         <div class="total"><span>Still owed</span><b id="owed">$0</b></div>
-        <div class="paybtns" id="payBtns">
-          <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener">Venmo</a>
-          <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener">PayPal</a>
+        <div class="paywith" id="payWith">
+          <span class="paywith-lbl">Pay With</span>
+          <div class="paybtns" id="payBtns">
+            <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener">Venmo</a>
+            <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener">PayPal</a>
+          </div>
         </div>
         <span class="payweb" id="venmoWeb" hidden>Venmo app didn't open? <a id="venmoWebLink" target="_blank" rel="noopener">Pay on venmo.com</a></span>
         <div class="handle" id="venmoRow"><span>Venmo</span><code id="venmoTxt"></code><button type="button" data-copy="venmoTxt">Copy</button></div>
@@ -807,21 +821,8 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
     <button class="btn" id="maxOk" type="button">OK</button>
   </div>
 </div>
-<div class="modal" id="payModal" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="payTitle">
-    <button class="sheet-x" id="payClose" type="button" aria-label="Close">×</button>
-    <div class="step"><span class="step-n" aria-hidden="true">3</span><div class="step-t"><small>Step Three</small><b id="payTitle">Make Your Payment</b></div></div>
-    <p id="payModalText" class="pay-modal-text"></p>
-    <div class="paybtns" id="payModalBtns">
-      <a class="btn venmo" id="pmVenmo" target="_blank" rel="noopener">Venmo</a>
-      <a class="btn paypal" id="pmPaypal" target="_blank" rel="noopener">PayPal</a>
-    </div>
-    <p class="note" id="payModalNote"></p>
-    <button class="btn ghost" id="payLater" type="button">I'll pay later</button>
-  </div>
-</div>
 
-<script src="config.js?v=91ef3046"></script>
-<script src="app.js?v=91ef3046"></script>
+<script src="config.js?v=c989ccfb"></script>
+<script src="app.js?v=c989ccfb"></script>
 </body>
 </html>
