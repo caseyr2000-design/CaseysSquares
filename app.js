@@ -859,6 +859,17 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     banner.classList.toggle("layout-left", left);
     banner.style.background = left && L.bg ? L.bg : "";
     let wide = !banner.hidden && window.innerWidth >= 760;
+    const between = !!(L && L.text === "between" && usingDefault);
+    banner.classList.toggle("layout-between", between);
+    $("band").style.background = (between || left) && L.strip ? L.strip : "";
+    if (between) {
+      // fill any space beside the picture with the colours at its left and right edges
+      banner.style.background = "linear-gradient(90deg," + (L.bgLeft || "#000") + " 50%," + (L.bgRight || "#000") + " 50%)";
+      const bw = banner.getBoundingClientRect(), iw = img.getBoundingClientRect();
+      const x = iw.left - bw.left + iw.width * (L.from || 0.35), w = iw.width * ((L.to || 0.6) - (L.from || 0.35));
+      banner.style.setProperty("--hx", Math.round(x) + "px"); banner.style.setProperty("--hw", Math.round(w) + "px");
+      wide = !banner.hidden && w >= 230;
+    }
     if (left && !banner.hidden) {
       const W = banner.clientWidth, H = img.clientHeight || 1, aspect = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 2;
       const drawnW = Math.min(W, H * aspect), free = (W - drawnW) / 2 + drawnW * (L.clear || 0);
@@ -907,7 +918,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   // ---------- request an invitation ----------
   function renderReqButton() {
     const show = !!(B.requestInvite && inviteMode() && !S.st.me && !S.st.admin);
-    $("reqWrap").hidden = !show;
+    $("reqBtn").hidden = !show;
   }
   function openReq() {
     $("reqModal").hidden = false; $("reqForm").hidden = false; $("reqDone").hidden = true; hide("rqMsgBox");
