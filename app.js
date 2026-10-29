@@ -248,6 +248,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     else corner.textContent = cf.nums ? QUARTERS.find((q) => q[0] === S.period)[2] : "#";
     b.append(corner);
     for (let c = 0; c < 10; c++) { const h = headerCell(cf.nums, "col", c); h.classList.add("hdrow"); b.append(h); }
+    const edge = () => { const e = el("div", "hd edge"); e.setAttribute("aria-hidden", "true"); return e; };
+    b.append(edge());
     for (let r = 0; r < 10; r++) {
       b.append(headerCell(cf.nums, "row", r));
       for (let c = 0; c < 10; c++) {
@@ -273,7 +275,9 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
         if (winBy[id]) { btn.classList.add("win"); btn.append(el("span", "q", winBy[id].join(" "))); }
         b.append(btn);
       }
+      b.append(edge()); // blue border column on the right
     }
+    for (let c = 0; c < 12; c++) b.append(edge()); // blue border row along the bottom
     field.replaceChildren(top, side, b);
     applyZoom();
     if (focused) { const f = field.querySelector('[data-id="' + focused + '"]'); if (f) f.focus({ preventScroll: true }); }
@@ -286,12 +290,29 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   // ---------- zoom / big board ----------
   // Phones drop the sideways team label and narrow the number column so the squares can be as big as possible.
   const isCompact = () => window.innerWidth < 600 && !S.big;
+  const EDGE = 0.3; // the blue border column (right) and row (bottom), as a fraction of a square
   function fitCell(w, h) {
     const compact = isCompact(), rowHead = compact ? 0.6 : 0.8;
     const side = compact ? 0 : Math.max(30, Math.min(70, w * 0.04)) + 6;
-    let c = (w - side - 26) / (10 + rowHead);
-    if (h) c = Math.min(c, (h - 70) / (10 + rowHead + 0.7));
+    let c = (w - side - 26) / (10 + rowHead + EDGE);
+    if (h) c = Math.min(c, (h - 70) / (10 + rowHead + EDGE + 0.7));
     return Math.floor(c);
+  }
+  // Small squares: shrink each name until every whole word fits the square (no mid-word breaks).
+  function fitNames() {
+    const brd = $("field").querySelector(".board");
+    if (!brd || !(brd.classList.contains("lvl-i") || brd.classList.contains("lvl-s"))) return;
+    for (const nm of brd.querySelectorAll(".cell.taken .nm")) {
+      nm.style.fontSize = "";
+      const cell = nm.parentElement, em = cell.querySelector(".em");
+      const maxH = cell.clientHeight - (em ? em.offsetHeight : 0) - 3;
+      let size = parseFloat(getComputedStyle(nm).fontSize), guard = 30;
+      while (guard-- > 0 && size > 4 && (nm.scrollWidth > nm.clientWidth + 1.5 || nm.offsetHeight > maxH)) {
+        size -= 0.5; nm.style.fontSize = size + "px";
+      }
+      // a very long single word on a tiny screen: let it wrap rather than be cut off
+      nm.style.overflowWrap = nm.scrollWidth > nm.clientWidth + 1.5 ? "anywhere" : "";
+    }
   }
   function applyZoom() {
     let cell;
@@ -301,8 +322,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (S.big) {
       const body = $("bigBody"), short = window.innerHeight < 560, rowHead = 0.8;
       const side = Math.max(30, Math.min(70, body.clientWidth * 0.04)) + 6;
-      const byW = (body.clientWidth - side - 26) / (10 + rowHead);
-      const byH = (body.clientHeight - (short ? 8 : 60) - 26) / (10 + rowHead);
+      const byW = (body.clientWidth - side - 26) / (10 + rowHead + EDGE);
+      const byH = (body.clientHeight - (short ? 8 : 60) - 26) / (10 + rowHead + EDGE);
       // Short screens (phones sideways) can't fit the whole board, so keep squares tappable and let it scroll.
       cell = Math.floor(short ? Math.max(20, Math.min(46, byW)) : Math.max(20, Math.min(160, byW, byH)));
     }
@@ -315,6 +336,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       brd.classList.toggle("lvl-i", cell < 44);
       brd.classList.toggle("lvl-s", cell >= 44 && cell < 100);
     }
+    requestAnimationFrame(fitNames);
     $("zoomFit").setAttribute("aria-pressed", String(S.zoom === "fit"));
     S.curCell = cell;
   }
@@ -1046,6 +1068,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     renderHeader(); renderTabs(); renderBoard(); renderClaim(); renderPicker(); renderMine(); renderPayouts(); renderAdmin(); renderRules(); renderReqButton();
   }
   buildPicker(); buildThemes(); renderPicker(); renderTabs();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(fitNames));
   B.start((st, problem) => {
     if (problem) { $("offline").hidden = false; $("offlineTxt").textContent = problem; }
     else $("offline").hidden = true;
