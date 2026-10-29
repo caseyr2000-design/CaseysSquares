@@ -4,6 +4,6 @@ window.SQUARES_API = "https://script.google.com/macros/s/AKfycbwvE_4KTABj1Jq1tGm
 
 // Header picture shown at the top of the board (a header photo uploaded in the Commissioner panel replaces it).
 window.SQUARES_HEADER_IMAGE = "header-combined.jpg";
-// Title sits between the logo and the performer (from/to = share of the picture width); green and black fill
+// Title sits over the Super Bowl logo on the left (from/to = share of the picture width); green and black fill
 // any space beside the picture, and the strip below it is green.
-window.SQUARES_HEADER_LAYOUT = { text: "between", from: 0.33, to: 0.655, bgLeft: "#234c48", bgRight: "#000000", strip: "#234c48" };
+window.SQUARES_HEADER_LAYOUT = { text: "between", from: 0.012, to: 0.335, bgLeft: "#234c48", bgRight: "#000000", strip: "#234c48" };

@@ -139,6 +139,38 @@ window.SquaresBackend = (function () {
     w.append(el("span", null, name));
     return w;
   }
+
+  // ---------- header title: three balanced lines, sized to fill the space over the logo ----------
+  function setTitle(text) {
+    const h = $("title"); if (h.dataset.t === text) return; h.dataset.t = text;
+    const words = String(text || "").trim().split(/\s+/).filter(Boolean), n = Math.min(3, words.length);
+    let best = null;
+    // try every way to split the words into n lines; keep the one whose longest line is shortest
+    const len = (a, b) => words.slice(a, b).join(" ").length;
+    if (n <= 1) best = [words.join(" ")];
+    else if (n === 2) { for (let i = 1; i < words.length; i++) { const m = Math.max(len(0, i), len(i)); if (!best || m < best.m) best = { m, l: [words.slice(0, i).join(" "), words.slice(i).join(" ")] }; } best = best.l; }
+    else {
+      for (let i = 1; i < words.length - 1; i++) for (let j = i + 1; j < words.length; j++) {
+        const m = Math.max(len(0, i), len(i, j), len(j)); if (!best || m < best.m) best = { m, l: [words.slice(0, i), words.slice(i, j), words.slice(j)].map((w) => w.join(" ")) };
+      }
+      best = best.l;
+    }
+    h.replaceChildren(...best.map((t) => { const s = document.createElement("span"); s.className = "tl"; s.textContent = t; return s; }));
+    h.setAttribute("aria-label", text);
+  }
+  function fitTitle() {
+    const h = $("title"), hero = $("heroText"), banner = $("banner");
+    h.style.fontSize = "";
+    if (hero.parentElement !== banner) return;
+    const lines = [...h.querySelectorAll(".tl")]; if (!lines.length) return;
+    const cs = getComputedStyle(hero), W = hero.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const other = [...hero.children].filter((c) => c !== h).reduce((a, c) => a + c.offsetHeight, 0);
+    const H = banner.clientHeight * 0.94 - other - 24;
+    h.style.fontSize = "100px";
+    const w100 = Math.max(...lines.map((l) => l.offsetWidth)), h100 = h.offsetHeight;
+    const size = Math.max(18, Math.min(150, Math.floor(Math.min(100 * W / w100, 100 * H / h100))));
+    h.style.fontSize = size + "px";
+  }
   function placeHero() {
     const hero = $("heroText"), banner = $("banner"), img = $("bannerImg"), band = $("band");
     const L = window.SQUARES_HEADER_LAYOUT || null, usingDefault = !(st && st.cfg.imageUrls && st.cfg.imageUrls.header);
@@ -162,14 +194,14 @@ window.SquaresBackend = (function () {
     else if (!corner && stats.parentElement === banner) hero.append(stats);
     banner.classList.toggle("stats-corner", corner);
     if (corner) { const bw = banner.getBoundingClientRect(), iw = img.getBoundingClientRect(); banner.style.setProperty("--ir", Math.max(0, Math.round(bw.right - iw.right)) + "px"); }
+    fitTitle();
   }
   window.addEventListener("resize", placeHero);
   $("bannerImg").addEventListener("load", placeHero);
   function renderHeader() {
     const cf = st.cfg, img = cf.imageUrls || {}, now = Date.now();
     document.body.dataset.scheme = cf.scheme || "turf";
-    $("title").textContent = cf.title;
-    $("title").classList.toggle("long", cf.title.length > 34); $("title").classList.toggle("xlong", cf.title.length > 46);
+    setTitle(cf.title);
     $("matchup").replaceChildren(teamEl(cf.teamTop, img.logoTop), el("span", "vs", "vs"), teamEl(cf.teamSide, img.logoSide));
     const held = Object.values(st.squares || {}).filter((s) => !(s.expiresAt && s.expiresAt <= now));
     $("sPrice").textContent = money(cf.price);
@@ -462,7 +494,7 @@ window.SquaresBackend = (function () {
   }
   window.addEventListener("resize", fitNav);
   fitNav();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNav);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitNav(); fitTitle(); });
   renderPage();
   let wasAdmin = null;
   B.start((s, problem) => {

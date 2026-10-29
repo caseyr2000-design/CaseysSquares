@@ -634,10 +634,14 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
 .gridiron-floor .post.sm{display:none}
 @media (max-width:600px){.gridiron-floor .post.lg{display:none}.gridiron-floor .post.sm{display:block}}
 /* longer pool names: smaller title so the header keeps its height */
-.banner.layout-between .hero-text h1.long{font-size:clamp(24px,3.1vw,56px)}
-.banner.layout-between .hero-text h1.xlong{font-size:clamp(20px,2.6vw,46px)}
-h1.long{font-size:clamp(24px,7vw,40px)}
-h1.xlong{font-size:clamp(22px,6.2vw,36px)}
+
+/* title: always three lines; over the logo it is sized by script to fill the space */
+#title .tl{display:block}
+.banner #title .tl{white-space:nowrap}
+.banner.layout-between .hero-text h1{line-height:.9;margin:0 0 2px}
+.banner.layout-between .hero-text{padding:10px 8px}
+.banner.layout-between .hero-text::before{inset:-2% -6%;background:radial-gradient(closest-side,rgba(0,0,0,.62),rgba(0,0,0,.25) 70%,rgba(0,0,0,0))}
+.banner .hero-text h1{text-shadow:0 1px 0 rgba(0,0,0,.45),0 3px 4px rgba(0,0,0,.45),0 8px 16px rgba(0,0,0,.4),0 0 30px rgba(0,0,0,.35)}
 </style>
 </head>
 <body>
@@ -1054,8 +1058,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     const cf = S.st.cfg, img = cf.imageUrls || {}, sq = live(), all = Object.values(sq);
     document.title = cf.title;
     document.body.dataset.scheme = S.previewScheme || cf.scheme || "turf";
-    $("title").textContent = cf.title;
-    $("title").classList.toggle("long", cf.title.length > 34); $("title").classList.toggle("xlong", cf.title.length > 46);
+    setTitle(cf.title);
     $("matchup").replaceChildren(teamEl(cf.teamTop, img.logoTop), el("span", "vs", "vs"), teamEl(cf.teamSide, img.logoSide));
     const band = $("band"), headerUrl = img.header || window.SQUARES_HEADER_IMAGE || "";
     band.classList.remove("photo");
@@ -1835,6 +1838,38 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   // Layout comes from config.js: SQUARES_HEADER_LAYOUT = { text: "left", clear: 0.19, bg: "#234c48" } puts the
   // title in the open space left of the picture's centre (clear = share of the picture's width that is empty on
   // each side); without it the title sits over the middle of the picture.
+
+  // ---------- header title: three balanced lines, sized to fill the space over the logo ----------
+  function setTitle(text) {
+    const h = $("title"); if (h.dataset.t === text) return; h.dataset.t = text;
+    const words = String(text || "").trim().split(/\s+/).filter(Boolean), n = Math.min(3, words.length);
+    let best = null;
+    // try every way to split the words into n lines; keep the one whose longest line is shortest
+    const len = (a, b) => words.slice(a, b).join(" ").length;
+    if (n <= 1) best = [words.join(" ")];
+    else if (n === 2) { for (let i = 1; i < words.length; i++) { const m = Math.max(len(0, i), len(i)); if (!best || m < best.m) best = { m, l: [words.slice(0, i).join(" "), words.slice(i).join(" ")] }; } best = best.l; }
+    else {
+      for (let i = 1; i < words.length - 1; i++) for (let j = i + 1; j < words.length; j++) {
+        const m = Math.max(len(0, i), len(i, j), len(j)); if (!best || m < best.m) best = { m, l: [words.slice(0, i), words.slice(i, j), words.slice(j)].map((w) => w.join(" ")) };
+      }
+      best = best.l;
+    }
+    h.replaceChildren(...best.map((t) => { const s = document.createElement("span"); s.className = "tl"; s.textContent = t; return s; }));
+    h.setAttribute("aria-label", text);
+  }
+  function fitTitle() {
+    const h = $("title"), hero = $("heroText"), banner = $("banner");
+    h.style.fontSize = "";
+    if (hero.parentElement !== banner) return;
+    const lines = [...h.querySelectorAll(".tl")]; if (!lines.length) return;
+    const cs = getComputedStyle(hero), W = hero.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const other = [...hero.children].filter((c) => c !== h).reduce((a, c) => a + c.offsetHeight, 0);
+    const H = banner.clientHeight * 0.94 - other - 24;
+    h.style.fontSize = "100px";
+    const w100 = Math.max(...lines.map((l) => l.offsetWidth)), h100 = h.offsetHeight;
+    const size = Math.max(18, Math.min(150, Math.floor(Math.min(100 * W / w100, 100 * H / h100))));
+    h.style.fontSize = size + "px";
+  }
   function placeHero() {
     const hero = $("heroText"), banner = $("banner"), img = $("bannerImg");
     const L = window.SQUARES_HEADER_LAYOUT || null, usingDefault = !(S.st && S.st.cfg.imageUrls && S.st.cfg.imageUrls.header);
@@ -1871,6 +1906,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (corner) { const bw = banner.getBoundingClientRect(), iw = img.getBoundingClientRect(); banner.style.setProperty("--ir", Math.max(0, Math.round(bw.right - iw.right)) + "px"); }
     $("band").classList.toggle("stats-in-banner", leftStats);
     $("band").classList.toggle("hero-in-banner", hero.parentElement === banner);
+    fitTitle();
   }
   window.addEventListener("resize", placeHero);
   $("bannerImg").addEventListener("load", placeHero);
@@ -1985,7 +2021,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   }
   window.addEventListener("resize", fitNav);
   fitNav();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNav);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitNav(); fitTitle(); });
   buildPicker(); buildThemes(); renderPicker(); renderTabs();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(fitNames));
   B.start((st, problem) => {
