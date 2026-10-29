@@ -169,6 +169,7 @@ window.SquaresBackend = (function () {
     const cf = st.cfg, img = cf.imageUrls || {}, now = Date.now();
     document.body.dataset.scheme = cf.scheme || "turf";
     $("title").textContent = cf.title;
+    $("title").classList.toggle("long", cf.title.length > 34); $("title").classList.toggle("xlong", cf.title.length > 46);
     $("matchup").replaceChildren(teamEl(cf.teamTop, img.logoTop), el("span", "vs", "vs"), teamEl(cf.teamSide, img.logoSide));
     const held = Object.values(st.squares || {}).filter((s) => !(s.expiresAt && s.expiresAt <= now));
     $("sPrice").textContent = money(cf.price);

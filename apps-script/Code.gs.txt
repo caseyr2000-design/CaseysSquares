@@ -308,7 +308,7 @@ function saveSettings(adminToken, b) {
     if (paypal && !/^[A-Za-z0-9]{1,40}$/.test(paypal)) fail_('Use just your PayPal.me name, the part after paypal.me/.');
     var scheme = b.scheme == null ? cfg.scheme : b.scheme;
     if (SCHEMES.indexOf(scheme) < 0) fail_('Pick one of the site color options.');
-    cfg.title = clean_(b.title, 40) || DEFAULT_CFG.title;
+    cfg.title = clean_(b.title, 60) || DEFAULT_CFG.title;
     cfg.teamTop = clean_(b.teamTop, 20) || 'Home';
     cfg.teamSide = clean_(b.teamSide, 20) || 'Away';
     cfg.price = Math.round(price * 100) / 100; cfg.holdMinutes = hold;

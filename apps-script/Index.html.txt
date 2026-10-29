@@ -633,6 +633,11 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
 /* desktop uses the tall-upright posts; phones keep the shorter ones */
 .gridiron-floor .post.sm{display:none}
 @media (max-width:600px){.gridiron-floor .post.lg{display:none}.gridiron-floor .post.sm{display:block}}
+/* longer pool names: smaller title so the header keeps its height */
+.banner.layout-between .hero-text h1.long{font-size:clamp(24px,3.1vw,56px)}
+.banner.layout-between .hero-text h1.xlong{font-size:clamp(20px,2.6vw,46px)}
+h1.long{font-size:clamp(24px,7vw,40px)}
+h1.xlong{font-size:clamp(22px,6.2vw,36px)}
 </style>
 </head>
 <body>
@@ -744,7 +749,7 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
 
     <div class="panel" id="adminPanel" hidden>
       <h2>Commissioner</h2>
-      <label for="cTitle">Pool name</label><input id="cTitle" type="text" maxlength="40">
+      <label for="cTitle">Pool name</label><input id="cTitle" type="text" maxlength="60">
       <div class="row2">
         <div><label for="cTop">Team across top</label><input id="cTop" type="text" maxlength="20"></div>
         <div><label for="cSide">Team down side</label><input id="cSide" type="text" maxlength="20"></div>
@@ -1050,6 +1055,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     document.title = cf.title;
     document.body.dataset.scheme = S.previewScheme || cf.scheme || "turf";
     $("title").textContent = cf.title;
+    $("title").classList.toggle("long", cf.title.length > 34); $("title").classList.toggle("xlong", cf.title.length > 46);
     $("matchup").replaceChildren(teamEl(cf.teamTop, img.logoTop), el("span", "vs", "vs"), teamEl(cf.teamSide, img.logoSide));
     const band = $("band"), headerUrl = img.header || window.SQUARES_HEADER_IMAGE || "";
     band.classList.remove("photo");

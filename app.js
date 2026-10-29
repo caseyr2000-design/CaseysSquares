@@ -182,6 +182,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     document.title = cf.title;
     document.body.dataset.scheme = S.previewScheme || cf.scheme || "turf";
     $("title").textContent = cf.title;
+    $("title").classList.toggle("long", cf.title.length > 34); $("title").classList.toggle("xlong", cf.title.length > 46);
     $("matchup").replaceChildren(teamEl(cf.teamTop, img.logoTop), el("span", "vs", "vs"), teamEl(cf.teamSide, img.logoSide));
     const band = $("band"), headerUrl = img.header || window.SQUARES_HEADER_IMAGE || "";
     band.classList.remove("photo");
