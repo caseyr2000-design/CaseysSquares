@@ -993,8 +993,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     h.style.fontSize = "100px";
     const w100 = Math.max(...lines.map((l) => l.offsetWidth)), h100 = h.offsetHeight;
     const fit = Math.min(100 * W / w100, 100 * H / h100);
-    // desktop: 75% of the largest size that fits; phones: half the size that fits
-    const size = Math.max(inOv ? 8 : 18, Math.min(220, Math.floor(fit * (inOv ? 0.46 : 0.75))));
+    // desktop: 75% of the largest size that fits; phones: 55% of the size that fits
+    const size = Math.max(inOv ? 8 : 18, Math.min(220, Math.floor(fit * (inOv ? 0.552 : 0.75))));
     h.style.fontSize = size + "px";
   }
   // Phones: the picture is too short for the whole header, so only the title goes over it.

@@ -644,7 +644,7 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
 .banner .hero-text h1{text-shadow:0 1px 0 rgba(0,0,0,.45),0 3px 4px rgba(0,0,0,.45),0 8px 16px rgba(0,0,0,.4),0 0 30px rgba(0,0,0,.35)}
 
 /* phones: the three-line title sits over the left two-thirds of the picture (clear of the price box) */
-.title-overlay{position:absolute;top:0;bottom:0;left:2%;width:68%;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 4px;line-height:1;pointer-events:none}
+.title-overlay{position:absolute;top:0;bottom:0;left:16%;width:68%;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 4px;line-height:1;pointer-events:none}
 .title-overlay[hidden]{display:none}
 .title-overlay::before{content:"";position:absolute;inset:4% 0;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,.2) 70%,rgba(0,0,0,0));z-index:0}
 .title-overlay h1{position:relative;z-index:1;margin:0;color:#fff;line-height:.92;text-shadow:0 1px 0 rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.55),0 6px 14px rgba(0,0,0,.45)}
@@ -1877,8 +1877,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     h.style.fontSize = "100px";
     const w100 = Math.max(...lines.map((l) => l.offsetWidth)), h100 = h.offsetHeight;
     const fit = Math.min(100 * W / w100, 100 * H / h100);
-    // desktop: 75% of the largest size that fits; phones: half the size that fits
-    const size = Math.max(inOv ? 8 : 18, Math.min(220, Math.floor(fit * (inOv ? 0.46 : 0.75))));
+    // desktop: 75% of the largest size that fits; phones: 55% of the size that fits
+    const size = Math.max(inOv ? 8 : 18, Math.min(220, Math.floor(fit * (inOv ? 0.552 : 0.75))));
     h.style.fontSize = size + "px";
   }
   // Phones: the picture is too short for the whole header, so only the title goes over it.
