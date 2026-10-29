@@ -581,9 +581,22 @@ table.lb td.acts .tog{min-height:30px;padding:4px 8px}
 .paybtns.flash{animation:payflash 1.2s ease-out 2}
 @keyframes payflash{0%{box-shadow:0 0 0 0 rgba(31,157,72,.55);border-radius:10px}100%{box-shadow:0 0 0 14px rgba(31,157,72,0);border-radius:10px}}
 @media (max-width:600px){.paywith .paybtns{grid-template-columns:1fr 1fr}}
-/* Step 3: both pay buttons green */
-.paywith .paybtns .btn.venmo,.paywith .paybtns .btn.paypal{background:#1f9d48;color:#fff;box-shadow:0 2px 0 #157a37}
-.paywith .paybtns .btn.venmo:hover,.paywith .paybtns .btn.paypal:hover{background:#1a8a3e}
+/* Step 3: Venmo and PayPal buttons in their own colors, with the names spelled out in their styles */
+.paywith .paybtns .btn{display:flex;align-items:center;justify-content:center;min-height:52px;padding:8px 10px}
+.paywith .paybtns .btn.venmo{background:#008cff;color:#fff;box-shadow:0 2px 0 #0068bd}
+.paywith .paybtns .btn.venmo:hover{background:#0080ea}
+.paywith .paybtns .btn.paypal{background:#ffc439;color:#003087;box-shadow:0 2px 0 #d9a21c}
+.paywith .paybtns .btn.paypal:hover{background:#f7b928}
+.wm-venmo{font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;font-weight:900;font-style:italic;font-size:25px;letter-spacing:-.04em;line-height:1;text-transform:none}
+.wm-paypal{font-family:Verdana,"Helvetica Neue",Arial,sans-serif;font-weight:700;font-style:italic;font-size:23px;letter-spacing:-.03em;line-height:1;text-transform:none}
+.wm-paypal b{color:#003087;font-weight:800}
+.wm-paypal i{color:#009cde;font-weight:800;font-style:inherit}
+.sentbtn{margin-top:12px;background:#1f9d48;color:#fff;font-weight:800;font-size:16px;box-shadow:0 2px 0 #157a37}
+.sentbtn:disabled{opacity:.7}
+.sent-hint{margin-top:6px;font-size:12.5px}
+.chip .t.sent{color:var(--ok)}
+.ledger-row.reported{background:color-mix(in srgb,#1f9d48 10%,transparent);border-radius:6px}
+.ledger-row.reported small{color:var(--ok);font-weight:600}
 
 
 /* blue border cells along the right side and bottom of the grid (no numbers) */
@@ -608,6 +621,12 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
   .gridiron-floor .post{width:32px;height:49px}
 }
 @media print{.gridiron-floor{display:none}body{padding-bottom:0}}
+
+/* phones: keep every menu link on one row */
+@media (max-width:600px){
+  .sitenav{flex-wrap:nowrap;justify-content:space-between;gap:0;padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
+  .sitenav a{white-space:nowrap;font-size:clamp(7.5px,2.4vw,12px);letter-spacing:0;padding:8px clamp(1px,.5vw,4px);border-bottom-width:2px;flex:none}
+}
 </style>
 </head>
 <body>
@@ -692,10 +711,13 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
         <div class="paywith" id="payWith">
           <span class="paywith-lbl">Pay With</span>
           <div class="paybtns" id="payBtns">
-            <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener">Venmo</a>
-            <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener">PayPal</a>
+            <a class="btn venmo" id="venmoBtn" target="_blank" rel="noopener"><span class="wm-venmo">venmo</span></a>
+            <a class="btn paypal" id="paypalBtn" target="_blank" rel="noopener"><span class="wm-paypal"><b>Pay</b><i>Pal</i></span></a>
           </div>
+          <button class="btn sentbtn" id="sentBtn" type="button" hidden>✓ I've Sent My Payment</button>
+          <p class="note sent-hint" id="sentHint" hidden>After paying, tap <b>I've Sent My Payment</b> so the commissioner is notified.</p>
         </div>
+        <div class="msg ok" id="sentMsg" hidden></div>
         <span class="payweb" id="venmoWeb" hidden>Venmo app didn't open? <a id="venmoWebLink" target="_blank" rel="noopener">Pay on venmo.com</a></span>
         <div class="handle" id="venmoRow"><span>Venmo</span><code id="venmoTxt"></code><button type="button" data-copy="venmoTxt">Copy</button></div>
         <div class="handle" id="paypalRow"><span>PayPal</span><code id="paypalTxt"></code><button type="button" data-copy="paypalTxt">Copy</button></div>
@@ -853,7 +875,7 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
 </div>
 <!--floor--><div class="gridiron-floor" aria-hidden="true"><svg class="post l" viewBox="0 0 46 70" aria-hidden="true"><g fill="#f5c451" stroke="#b8860b" stroke-width="1.2"><rect x="4" y="2" width="5" height="40" rx="2"/><rect x="37" y="2" width="5" height="40" rx="2"/><rect x="4" y="37" width="38" height="5" rx="2"/><rect x="20.5" y="40" width="5" height="30" rx="1.5"/></g></svg><svg class="post r" viewBox="0 0 46 70" aria-hidden="true"><g fill="#f5c451" stroke="#b8860b" stroke-width="1.2"><rect x="4" y="2" width="5" height="40" rx="2"/><rect x="37" y="2" width="5" height="40" rx="2"/><rect x="4" y="37" width="38" height="5" rx="2"/><rect x="20.5" y="40" width="5" height="30" rx="1.5"/></g></svg><div class="grass"></div></div><!--/floor-->
 
-<script src="config.js?v=9b8dd986"></script>
-<script src="app.js?v=9b8dd986"></script>
+<script src="config.js?v=4330a625"></script>
+<script src="app.js?v=4330a625"></script>
 </body>
 </html>

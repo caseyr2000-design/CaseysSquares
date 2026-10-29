@@ -57,7 +57,7 @@ function doPost(e) {
     draw: draw, reset: reset, saveScores: saveScores, uploadImage: uploadImage, removeImage: removeImage,
     createInvite: createInvite, updateInvite: updateInvite, sendInvite: sendInvite, adminAssign: adminAssign,
     exportLedger: exportLedger, requestInvite: requestInvite, dismissRequest: dismissRequest,
-    getPage: getPage, savePage: savePage
+    getPage: getPage, savePage: savePage, reportPayment: reportPayment
   };
   var out;
   try {
@@ -149,7 +149,7 @@ function purge_(cfg, all) {
   var cutoff = Date.now() - cfg.holdMinutes * 60000, p = props_();
   for (var k in all) if (k.indexOf('sq:') === 0) {
     var s = JSON.parse(all[k]);
-    if (!s.paid && s.claimedAt < cutoff) { p.deleteProperty(k); delete all[k]; }
+    if (!s.paid && !s.reportedAt && s.claimedAt < cutoff) { p.deleteProperty(k); delete all[k]; }
   }
 }
 function publicCfg_(cfg) { var c = clone_(cfg); delete c.imageFiles; return c; }
@@ -170,8 +170,9 @@ function getState(playerToken, adminToken) {
       emoji: hide ? '' : (who && who.emoji) || '',
       name: hide ? 'Reserved' : (who ? who.name : (s.name || 'Player')), font: hide ? 'clean' : (who ? who.font : s.font), color: hide ? 'ink' : (who ? who.color : s.color),
       reserved: hide, paid: !!s.paid, claimedAt: s.claimedAt,
+      reported: !s.paid && !!s.reportedAt && (mine || admin), reportedVia: !s.paid && s.reportedAt && (mine || admin) ? (s.reportedVia || '') : '',
       owner: hide ? 'r' : (s.iid != null ? 'i' + s.iid : 'p' + s.pid), mine: mine,
-      expiresAt: !s.paid && !cfg.locked ? s.claimedAt + hold : null
+      expiresAt: !s.paid && !s.reportedAt && !cfg.locked ? s.claimedAt + hold : null
     };
   }
   var res = {
@@ -222,7 +223,7 @@ function claim(playerToken, p) {
     if (!me) fail_('You need an invitation link to pick squares. Ask the commissioner for one.');
     if (me.revoked) fail_('Your invitation has been turned off. Contact the commissioner.');
     var all = props_().getProperties(), cfg = getCfg_(all), sq = squares_(all), held = 0, cutoff = Date.now() - cfg.holdMinutes * 60000;
-    for (var id in sq) if (sq[id].iid === me.id && (sq[id].paid || cfg.locked || sq[id].claimedAt >= cutoff)) held++;
+    for (var id in sq) if (sq[id].iid === me.id && (sq[id].paid || sq[id].reportedAt || cfg.locked || sq[id].claimedAt >= cutoff)) held++;
     var max = Number(cfg.maxPerPlayer) || 0;
     if (max && held + cells.length > max) {
       var left = Math.max(0, max - held);
@@ -336,7 +337,7 @@ function setPaid(adminToken, cells, paid) {
     var all = props_().getProperties(), writes = {};
     cells_(cells).forEach(function (c) {
       if (!all['sq:' + c]) return;
-      var s = JSON.parse(all['sq:' + c]); s.paid = !!paid; writes['sq:' + c] = JSON.stringify(s);
+      var s = JSON.parse(all['sq:' + c]); s.paid = !!paid; if (!paid) { delete s.reportedAt; delete s.reportedVia; } writes['sq:' + c] = JSON.stringify(s);
     });
     props_().setProperties(writes);
     return true;
@@ -602,4 +603,45 @@ function savePage(adminToken, name, data, rev) {
     for (var k = parts.length; k < oldN; k++) p.deleteProperty('pg:' + name + ':' + k);
     return { rev: curRev + 1 };
   });
+}
+
+// ---------- "I've sent my payment" ----------
+// The player taps this after paying in Venmo or PayPal. Their unpaid squares are flagged (and stop expiring)
+// and the commissioner gets an email so they can check and mark them paid.
+function reportPayment(playerToken, method) {
+  method = pick_(String(method || ''), ['venmo', 'paypal', 'other'], 'other');
+  var out = withLock_(function () {
+    var all = props_().getProperties(), me = inviteByToken_(playerToken, all);
+    if (!me) fail_('You need your invitation link to report a payment.');
+    if (me.revoked) fail_('Your invitation has been turned off.');
+    var cfg = getCfg_(all), sq = squares_(all), now = Date.now(), cutoff = now - cfg.holdMinutes * 60000, cells = [], fresh = 0, w = {};
+    for (var id in sq) {
+      var s = sq[id];
+      if (s.iid !== me.id || s.paid) continue;
+      if (!(s.reportedAt || cfg.locked || s.claimedAt >= cutoff)) continue; // already expired
+      cells.push(id);
+      if (!s.reportedAt) { s.reportedAt = now; s.reportedVia = method; w['sq:' + id] = JSON.stringify(s); fresh++; }
+    }
+    if (!cells.length) fail_('You have no unpaid squares right now.');
+    if (fresh) props_().setProperties(w);
+    return { me: me, cfg: cfg, cells: cells.sort(), fresh: fresh };
+  });
+  var cache = CacheService.getScriptCache(), key = 'rp:' + out.me.id;
+  if (!out.fresh && cache.get(key)) return { cells: out.cells.length, emailed: false, already: true };
+  cache.put(key, '1', 120);
+  var cfg = out.cfg, to = props_().getProperty('COMMISSIONER_EMAIL') || cfg.contactEmail, emailed = false;
+  var label = function (id) { return 'R' + (Number(id[1]) + 1) + 'C' + (Number(id[3]) + 1); };
+  var amount = '$' + (out.cells.length * cfg.price).toFixed(2).replace(/\.00$/, '');
+  var via = method === 'venmo' ? 'Venmo' : method === 'paypal' ? 'PayPal' : 'Venmo or PayPal';
+  if (to && MailApp.getRemainingDailyQuota() > 0) {
+    GmailApp.sendEmail(to, 'Payment sent: ' + out.me.name + ' paid ' + amount + ' via ' + via,
+      out.me.name + ' says they just paid ' + amount + ' via ' + via + ' for ' + out.cells.length + ' square' + (out.cells.length > 1 ? 's' : '') +
+      ' on ' + cfg.title + ':\n\n' + out.cells.map(label).join(', ') + '\n\n' +
+      'Check your ' + via + ' account, then open your board, log in as commissioner and mark these squares paid. ' +
+      'Until you do, they stay on hold for ' + out.me.name + ' (they will not expire).' +
+      (out.me.email ? '\n\nReply to this email to reach ' + out.me.name + '.' : ''),
+      out.me.email ? { replyTo: out.me.email, name: cfg.title } : { name: cfg.title });
+    emailed = true;
+  }
+  return { cells: out.cells.length, emailed: emailed };
 }

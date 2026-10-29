@@ -85,6 +85,7 @@ window.SquaresBackend = (function () {
     async uploadImage(slot, blob) { return act("uploadImage", adm(), slot, await toBase64(blob), blob.type); },
     removeImage: (slot) => act("removeImage", adm(), slot),
     getPage: (name) => run("getPage", name),
+    reportPayment: (method) => act("reportPayment", tok(), method),
     savePage: (name, data, rev) => run("savePage", adm(), name, data, rev),
     refresh: () => refresh(),
     createInvite: (b) => act("createInvite", adm(), b),

@@ -85,6 +85,7 @@ window.SquaresBackend = (function () {
     async uploadImage(slot, blob) { return act("uploadImage", adm(), slot, await toBase64(blob), blob.type); },
     removeImage: (slot) => act("removeImage", adm(), slot),
     getPage: (name) => run("getPage", name),
+    reportPayment: (method) => act("reportPayment", tok(), method),
     savePage: (name, data, rev) => run("savePage", adm(), name, data, rev),
     refresh: () => refresh(),
     createInvite: (b) => act("createInvite", adm(), b),
@@ -261,7 +262,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
           n.append(el("span", "n-full", sq.name), el("span", "n-short", np.short), el("span", "n-init", np.init));
           if (sq.emoji) { btn.classList.add("has-em"); btn.append(el("span", "em", sq.emoji)); }
           if (sq.color && sq.color !== "ink") n.style.setProperty("--pc", "var(--pc-" + sq.color + ")");
-          const label = sq.paid ? "PAID" : (sq.mine && sq.expiresAt ? minsLeft(sq) + "m left" : "UNPAID");
+          const label = sq.paid ? "PAID" : sq.reported ? "SENT" : (sq.mine && sq.expiresAt ? minsLeft(sq) + "m left" : "UNPAID");
           btn.append(n, el("span", "pd", label));
           btn.setAttribute("aria-label", pos(id) + ", " + sq.name + ", " + (sq.paid ? "paid" : "unpaid"));
           btn.title = sq.name + (sq.paid ? " · paid" : " · unpaid");
@@ -419,7 +420,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     }
     $("sheetWhere").textContent = where;
     const st = $("sheetStatus");
-    st.textContent = sq.paid ? "Paid" : sq.expiresAt ? "Unpaid · releases in " + minsLeft(sq) + " min" : "Unpaid";
+    st.textContent = sq.paid ? "Paid" : sq.reported ? "Payment sent" + (sq.reportedVia === "venmo" ? " by Venmo" : sq.reportedVia === "paypal" ? " by PayPal" : "") + " · waiting for the commissioner to confirm" : sq.expiresAt ? "Unpaid · releases in " + minsLeft(sq) + " min" : "Unpaid";
     st.className = "sheet-status " + (sq.paid ? "ok" : "warn");
     const acts = $("sheetActs"); acts.replaceChildren();
     if (S.st.admin) {
@@ -597,8 +598,9 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     for (const id of mineIds) {
       const sq = sqs[id], ch = el("span", "chip" + (sq.paid ? " paid" : ""), pos(id));
       if (sq.paid) ch.append(" · paid");
+      else if (sq.reported) ch.append(el("span", "t sent", "payment sent"));
       else if (sq.expiresAt) ch.append(el("span", "t", minsLeft(sq) + " min left"));
-      if (!sq.paid && !cf.locked) {
+      if (!sq.paid && !sq.reported && !cf.locked) {
         const x = el("button", null, "×"); x.type = "button"; x.title = "Give this square back"; x.setAttribute("aria-label", "Give back " + pos(id));
         x.onclick = async () => { try { await B.release(id); } catch (e) { showMsg("claimMsg", e.message, "err"); } };
         ch.append(x);
@@ -615,6 +617,15 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     $("venmoWeb").hidden = !(isPhone && L.venmo && unpaid.length);
     if (L.paypal) { pb.href = L.paypal; pb.setAttribute("aria-label", "Pay " + money(owed) + " with PayPal"); }
     $("payWith").hidden = !unpaid.length || !(L.venmo || L.paypal);
+    const toReport = unpaid.filter((id) => !sqs[id].reported), canReport = !!B.reportPayment;
+    $("sentBtn").hidden = !canReport || !toReport.length;
+    $("sentHint").hidden = !canReport || !toReport.length;
+    $("sentBtn").disabled = !!S.reporting;
+    if (canReport && unpaid.length && !toReport.length) {
+      const via = sqs[unpaid[0]].reportedVia;
+      $("sentMsg").textContent = "Payment sent" + (via === "venmo" ? " by Venmo" : via === "paypal" ? " by PayPal" : "") + ". The commissioner has been notified and will mark your squares paid once the money arrives.";
+      $("sentMsg").className = "msg ok"; $("sentMsg").hidden = false;
+    } else if (!S.sentMsgSticky) $("sentMsg").hidden = true;
     $("payBtns").classList.toggle("one", !(L.venmo && L.paypal));
     $("venmoRow").hidden = !L.v; $("venmoTxt").textContent = L.v ? "@" + L.v : "";
     $("paypalRow").hidden = !L.p; $("paypalTxt").textContent = L.p ? "paypal.me/" + L.p : "";
@@ -633,6 +644,23 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     $("step3").scrollIntoView({ behavior: "smooth", block: window.innerWidth < 960 ? "start" : "nearest" });
   }
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("maxModal").hidden) $("maxModal").hidden = true; });
+  // remember which service they opened, then let them tell the commissioner they've paid
+  $("venmoBtn").addEventListener("click", () => { S.payMethod = "venmo"; });
+  $("paypalBtn").addEventListener("click", () => { S.payMethod = "paypal"; });
+  $("sentBtn").onclick = async () => {
+    if (S.reporting) return;
+    S.reporting = true; $("sentBtn").disabled = true; $("sentBtn").textContent = "Notifying the commissioner…";
+    try {
+      const r = await B.reportPayment(S.payMethod || "other");
+      S.sentMsgSticky = true;
+      $("sentMsg").className = "msg ok";
+      $("sentMsg").textContent = r && r.already ? "The commissioner was already notified. They'll mark your squares paid once the money arrives."
+        : "Thanks! The commissioner has been notified and will mark your squares paid once the money arrives.";
+      $("sentMsg").hidden = false;
+    } catch (e) { $("sentMsg").className = "msg err"; $("sentMsg").textContent = e.message; $("sentMsg").hidden = false; S.sentMsgSticky = true; }
+    S.reporting = false; $("sentBtn").textContent = "✓ I've Sent My Payment"; renderMine();
+    setTimeout(() => { S.sentMsgSticky = false; }, 8000);
+  };
 
   document.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-copy]"); if (!b) return;
@@ -707,7 +735,9 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       const unpaidIds = g.ids.filter((i) => !sqs[i].paid);
       const soonest = unpaidIds.map((i) => sqs[i]).filter((s) => s.expiresAt).sort((a, b) => a.expiresAt - b.expiresAt)[0];
       const row = el("div", "ledger-row"), w = el("span", "who", g.name + " · " + g.ids.length + " sq · " + money(g.ids.length * cf.price));
-      w.append(el("small", null, all ? "All paid" : paidN + " of " + g.ids.length + " paid" + (soonest ? " · releases in " + minsLeft(soonest) + " min" : "")));
+      const sent = unpaidIds.filter((i) => sqs[i].reported), via = sent.length ? sqs[sent[0]].reportedVia : "";
+      w.append(el("small", null, all ? "All paid" : paidN + " of " + g.ids.length + " paid" + (sent.length ? " · says paid" + (via === "venmo" ? " by Venmo" : via === "paypal" ? " by PayPal" : "") + ", check and mark paid" : soonest ? " · releases in " + minsLeft(soonest) + " min" : "")));
+      if (sent.length) row.classList.add("reported");
       const acts = el("div", "acts");
       const t = el("button", "tog" + (all ? " on" : ""), all ? "Paid" : "Mark paid"); t.type = "button";
       t.onclick = () => adminDo(() => B.setPaid(g.ids, !all));
