@@ -165,10 +165,10 @@ window.SquaresBackend = (function () {
     const lines = [...h.querySelectorAll(".tl")]; if (!lines.length) return;
     const cs = getComputedStyle(hero), W = hero.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const other = [...hero.children].filter((c) => c !== h).reduce((a, c) => a + c.offsetHeight, 0);
-    const H = banner.clientHeight * 0.94 - other - 24;
+    const H = banner.clientHeight * 0.98 - other - 12;
     h.style.fontSize = "100px";
     const w100 = Math.max(...lines.map((l) => l.offsetWidth)), h100 = h.offsetHeight;
-    const size = Math.max(18, Math.min(150, Math.floor(Math.min(100 * W / w100, 100 * H / h100))));
+    const size = Math.max(18, Math.min(220, Math.floor(Math.min(100 * W / w100, 100 * H / h100))));
     h.style.fontSize = size + "px";
   }
   function placeHero() {
@@ -183,7 +183,7 @@ window.SquaresBackend = (function () {
       const bw = banner.getBoundingClientRect(), iw = img.getBoundingClientRect();
       const x = iw.left - bw.left + iw.width * (L.from || 0.35), w = iw.width * ((L.to || 0.6) - (L.from || 0.35));
       banner.style.setProperty("--hx", Math.round(x) + "px"); banner.style.setProperty("--hw", Math.round(w) + "px");
-      wide = !banner.hidden && w >= 230;
+      wide = !banner.hidden && w >= 230 && window.innerWidth >= 760;
     }
     if (wide && hero.parentElement !== banner) banner.append(hero);
     else if (!wide && hero.parentElement === banner) band.querySelector(".wrap").prepend(hero);
