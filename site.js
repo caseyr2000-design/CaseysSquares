@@ -447,6 +447,21 @@ window.SquaresBackend = (function () {
   $("viewer").addEventListener("click", (e) => { if (e.target === $("viewer")) closeViewer(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("viewer").hidden) closeViewer(); });
 
+
+  // Phones: menu links on one row, as large as will fit.
+  function fitNav() {
+    const n = document.querySelector(".sitenav"); if (!n) return;
+    const links = [...n.querySelectorAll("a")];
+    links.forEach((a) => (a.style.fontSize = ""));
+    if (window.innerWidth > 600) return;
+    let size = Math.min(15, window.innerWidth * 0.036), guard = 40;
+    const apply = () => links.forEach((a) => (a.style.fontSize = size + "px"));
+    apply();
+    while (guard-- > 0 && size > 7 && n.scrollWidth > n.clientWidth + 0.5) { size -= 0.25; apply(); }
+  }
+  window.addEventListener("resize", fitNav);
+  fitNav();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNav);
   renderPage();
   let wasAdmin = null;
   B.start((s, problem) => {

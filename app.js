@@ -1097,6 +1097,21 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     for (const id of [...S.selected]) if (live()[id]) S.selected.delete(id);
     renderHeader(); renderTabs(); renderBoard(); renderClaim(); renderPicker(); renderMine(); renderPayouts(); renderAdmin(); renderRules(); renderReqButton();
   }
+
+  // Phones: menu links on one row, as large as will fit.
+  function fitNav() {
+    const n = document.querySelector(".sitenav"); if (!n) return;
+    const links = [...n.querySelectorAll("a")];
+    links.forEach((a) => (a.style.fontSize = ""));
+    if (window.innerWidth > 600) return;
+    let size = Math.min(15, window.innerWidth * 0.036), guard = 40;
+    const apply = () => links.forEach((a) => (a.style.fontSize = size + "px"));
+    apply();
+    while (guard-- > 0 && size > 7 && n.scrollWidth > n.clientWidth + 0.5) { size -= 0.25; apply(); }
+  }
+  window.addEventListener("resize", fitNav);
+  fitNav();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNav);
   buildPicker(); buildThemes(); renderPicker(); renderTabs();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(fitNames));
   B.start((st, problem) => {
