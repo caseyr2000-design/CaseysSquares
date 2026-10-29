@@ -644,6 +644,13 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
 .banner.layout-between .hero-text{padding:10px 8px}
 .banner.layout-between .hero-text::before{inset:-2% -6%;background:radial-gradient(closest-side,rgba(0,0,0,.62),rgba(0,0,0,.25) 70%,rgba(0,0,0,0))}
 .banner .hero-text h1{text-shadow:0 1px 0 rgba(0,0,0,.45),0 3px 4px rgba(0,0,0,.45),0 8px 16px rgba(0,0,0,.4),0 0 30px rgba(0,0,0,.35)}
+
+/* phones: the three-line title sits over the left two-thirds of the picture (clear of the price box) */
+.title-overlay{position:absolute;top:0;bottom:0;left:2%;width:68%;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 4px;line-height:1;pointer-events:none}
+.title-overlay[hidden]{display:none}
+.title-overlay::before{content:"";position:absolute;inset:4% 0;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,.2) 70%,rgba(0,0,0,0));z-index:0}
+.title-overlay h1{position:relative;z-index:1;margin:0;color:#fff;line-height:.92;text-shadow:0 1px 0 rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.55),0 6px 14px rgba(0,0,0,.45)}
+.title-overlay #title .tl{white-space:nowrap}
 </style>
 </head>
 <body data-page="yw">
@@ -673,7 +680,7 @@ body{padding-bottom:calc(var(--grass-h) + 30px + env(safe-area-inset-bottom,0px)
 </main>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Picture"><button class="sheet-x" id="viewerClose" type="button" aria-label="Close">×</button><figure><img id="viewerImg" alt=""><figcaption id="viewerCap"></figcaption></figure></div>
 <!--floor--><div class="gridiron-floor" aria-hidden="true"><svg class="post lg l" viewBox="0 -129 66 229" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post sm l" viewBox="0 -43 66 143" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post lg r" viewBox="0 -129 66 229" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><svg class="post sm r" viewBox="0 -43 66 143" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><div class="grass"></div></div><!--/floor-->
-<script src="config.js?v=e6567944"></script>
-<script src="site.js?v=e6567944"></script>
+<script src="config.js?v=e7d2aaaa"></script>
+<script src="site.js?v=e7d2aaaa"></script>
 </body>
 </html>

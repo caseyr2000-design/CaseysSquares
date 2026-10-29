@@ -159,17 +159,32 @@ window.SquaresBackend = (function () {
     h.setAttribute("aria-label", text);
   }
   function fitTitle() {
-    const h = $("title"), hero = $("heroText"), banner = $("banner");
+    const h = $("title"), hero = $("heroText"), banner = $("banner"), ov = $("titleOverlay");
     h.style.fontSize = "";
-    if (hero.parentElement !== banner) return;
+    const inHero = hero.parentElement === banner && h.parentElement === hero, inOv = !!ov && h.parentElement === ov;
+    if (!inHero && !inOv) return;
     const lines = [...h.querySelectorAll(".tl")]; if (!lines.length) return;
-    const cs = getComputedStyle(hero), W = hero.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    const other = [...hero.children].filter((c) => c !== h).reduce((a, c) => a + c.offsetHeight, 0);
-    const H = banner.clientHeight * 0.98 - other - 12;
+    const box = inOv ? ov : hero, cs = getComputedStyle(box);
+    const W = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const other = inOv ? 0 : [...hero.children].filter((c) => c !== h).reduce((a, c) => a + c.offsetHeight, 0);
+    const H = inOv ? banner.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) : banner.clientHeight * 0.98 - other - 12;
     h.style.fontSize = "100px";
     const w100 = Math.max(...lines.map((l) => l.offsetWidth)), h100 = h.offsetHeight;
-    const size = Math.max(18, Math.min(220, Math.floor(Math.min(100 * W / w100, 100 * H / h100))));
+    const fit = Math.min(100 * W / w100, 100 * H / h100);
+    // desktop: 75% of the largest size that fits; phones: a little breathing room
+    const size = Math.max(inOv ? 12 : 18, Math.min(220, Math.floor(fit * (inOv ? 0.92 : 0.75))));
     h.style.fontSize = size + "px";
+  }
+  // Phones: the picture is too short for the whole header, so only the title goes over it.
+  function placeTitleOverlay(between) {
+    const banner = $("banner"), hero = $("heroText"), h = $("title");
+    let ov = $("titleOverlay");
+    if (!ov) { ov = document.createElement("div"); ov.id = "titleOverlay"; ov.className = "title-overlay"; banner.append(ov); }
+    const want = between && !banner.hidden && hero.parentElement !== banner;
+    if (want && h.parentElement !== ov) ov.append(h);
+    else if (!want && h.parentElement === ov) hero.querySelector(".eyebrow").after(h);
+    ov.hidden = !want;
+    hero.classList.toggle("title-out", want);
   }
   function placeHero() {
     const hero = $("heroText"), banner = $("banner"), img = $("bannerImg"), band = $("band");
@@ -194,6 +209,7 @@ window.SquaresBackend = (function () {
     else if (!corner && stats.parentElement === banner) hero.append(stats);
     banner.classList.toggle("stats-corner", corner);
     if (corner) { const bw = banner.getBoundingClientRect(), iw = img.getBoundingClientRect(); banner.style.setProperty("--ir", Math.max(0, Math.round(bw.right - iw.right)) + "px"); }
+    placeTitleOverlay(between);
     fitTitle();
   }
   window.addEventListener("resize", placeHero);
