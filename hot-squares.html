@@ -128,7 +128,8 @@ button,a,.cell{touch-action:manipulation;-webkit-tap-highlight-color:transparent
 .cell.selected{background:var(--amber-soft);box-shadow:inset 0 0 0 2px var(--sel)}
 .cell.selected::after{content:"✓";font-weight:700;color:var(--sel);font-size:1.4em}
 .cell.win{box-shadow:inset 0 0 0 3px var(--win),inset 0 0 0 4px rgba(0,0,0,.18),inset 0 0 14px rgba(57,255,20,.5)}
-.cell .q{position:absolute;top:1px;right:2px;font-family:var(--f-mono);font-size:max(8px,.5em);line-height:1;padding:1px 2px;border-radius:2px;background:var(--ok-soft);font-weight:700;color:var(--ok)}
+.cell .q{position:absolute;top:2px;right:2px;display:flex;gap:1px;font-family:var(--f-mono);font-size:max(8px,.5em);line-height:1;font-weight:800}
+.cell .q i{font-style:normal;padding:1px 2px;border-radius:2px;color:#111}
 .cell.open .plus{color:var(--line);font-size:1.3em}
 .cell[disabled]{cursor:default}
 .board.small .cell .pd{display:none}
@@ -394,7 +395,8 @@ input[type=email]{width:100%;font:inherit;padding:9px 10px;border:1px solid var(
 .board.lvl-i .cell{padding:1px}
 .board.lvl-i .cell .em{font-size:max(9px,calc(var(--cell)*.3))!important;margin-bottom:0}
 .board.lvl-i .cell.unpaid::before{content:"";position:absolute;left:3px;top:3px;width:5px;height:5px;border-radius:50%;background:var(--amber)}
-.board.lvl-i .cell .q{font-size:7px;padding:0 1px}
+.board.lvl-i .cell .q{font-size:7px}
+.board.lvl-i .cell .q i{padding:0 1px}
 
 /* phones: team names in one line above the board, narrow number column */
 .team-top .both-down{display:none;color:var(--amber);margin-left:4px}
@@ -672,6 +674,15 @@ header.band.hero-on-photo > .wrap{display:none}
   .banner .title-overlay .hero-text .eyebrow{font-size:6.5px}
   .banner .title-overlay .hero-text .eyebrow .status{font-size:6px}
 }
+
+/* legend swatch: the four quarter colors */
+.legend i.lg-win{background:var(--surface);border:0;box-shadow:inset 0 0 0 2px var(--q1);background-image:linear-gradient(90deg,var(--q1) 0 25%,var(--q2) 25% 50%,var(--q3) 50% 75%,var(--q4) 75%);background-size:100% 3px;background-repeat:no-repeat;background-position:bottom}
+/* commissioner login: small link at the bottom right of the screen, on the grass */
+.login-link{position:fixed;z-index:35;right:max(118px,calc(env(safe-area-inset-right,0px) + 118px));bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:12.5px;font-weight:700;color:#fff;text-decoration:none;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.38);text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.login-link:hover{background:rgba(0,0,0,.55)}
+.login-link[hidden]{display:none}
+@media (max-width:600px){.login-link{right:max(52px,calc(env(safe-area-inset-right,0px) + 52px));bottom:calc(3px + env(safe-area-inset-bottom,0px));font-size:11px;padding:3px 8px}}
+@media print{.login-link{display:none}}
 </style>
 </head>
 <body data-page="hot">
@@ -700,8 +711,8 @@ header.band.hero-on-photo > .wrap{display:none}
 <p class="admin-note" id="adminHint">Commissioner? <a href="index.html#login">Log in on the Home page</a> to edit this page.</p>
 </main>
 <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Picture"><button class="sheet-x" id="viewerClose" type="button" aria-label="Close">×</button><figure><img id="viewerImg" alt=""><figcaption id="viewerCap"></figcaption></figure></div>
-<!--floor--><div class="gridiron-floor" aria-hidden="true"><svg class="post lg l" viewBox="0 -129 66 229" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post sm l" viewBox="0 -43 66 143" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post lg r" viewBox="0 -129 66 229" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><svg class="post sm r" viewBox="0 -43 66 143" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><div class="grass"></div></div><!--/floor-->
-<script src="config.js?v=bbeacfc0"></script>
-<script src="site.js?v=bbeacfc0"></script>
+<!--floor--><div class="gridiron-floor" aria-hidden="true"><svg class="post lg l" viewBox="0 -129 66 229" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post sm l" viewBox="0 -43 66 143" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post lg r" viewBox="0 -129 66 229" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><svg class="post sm r" viewBox="0 -43 66 143" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><div class="grass"></div></div><a class="login-link" id="showLogin" href="index.html#login">Commissioner login</a><!--/floor-->
+<script src="config.js?v=87dbe87b"></script>
+<script src="site.js?v=87dbe87b"></script>
 </body>
 </html>

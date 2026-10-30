@@ -230,7 +230,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   function renderBoard() {
     if (!S.st) return;
     const cf = S.st.cfg, img = cf.imageUrls || {}, sqs = live(), win = winners(), winBy = {}, me = S.st;
-    for (const q in win) (winBy[win[q]] = winBy[win[q]] || []).push(QUARTERS.find((x) => x[0] === q)[2]);
+    // On the All tab every winning square shows (in its quarter's color); on a quarter tab, only that quarter's winner.
+    for (const [q, , lab] of QUARTERS) if (win[q] && (S.period === "all" || S.period === q)) (winBy[win[q]] = winBy[win[q]] || []).push([q, lab]);
     const focused = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.id : null;
 
     const field = $("field");
@@ -273,7 +274,15 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
           btn.setAttribute("aria-label", pos(id) + ", open");
           if (cf.locked) btn.disabled = true;
         }
-        if (winBy[id]) { btn.classList.add("win"); btn.append(el("span", "q", winBy[id].join(" "))); }
+        if (winBy[id]) {
+          const qs = winBy[id], qv = (q) => "var(--q" + (QUARTERS.findIndex((x) => x[0] === q) + 1) + ")";
+          btn.classList.add("win");
+          // one colored ring per winning quarter (outermost = earliest quarter)
+          btn.style.boxShadow = qs.map(([q], i) => "inset 0 0 0 " + 3 * (i + 1) + "px " + qv(q)).concat(["inset 0 0 0 " + (3 * qs.length + 1) + "px rgba(0,0,0,.15)"]).join(",");
+          const tags = el("span", "q");
+          for (const [q, lab] of qs) { const t = el("i", null, lab); t.style.background = qv(q); tags.append(t); }
+          btn.append(tags);
+        }
         b.append(btn);
       }
       b.append(edge()); // blue border column on the right
@@ -689,7 +698,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   function renderAdmin() {
     const st = S.st;
     $("adminPanel").hidden = !st.admin;
-    $("footer").hidden = !B.hasLogin || st.admin;
+    $("footer").hidden = true;
+    $("showLogin").hidden = !B.hasLogin || st.admin;
     if (st.admin) $("loginPanel").hidden = true;
     if (!st.admin) return;
     const cf = st.cfg, active = document.activeElement;
@@ -836,7 +846,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   }
 
   // login (deployable site only)
-  $("showLogin").onclick = () => { $("loginPanel").hidden = false; $("adminPw").focus(); };
+  $("showLogin").onclick = (e) => { e.preventDefault(); $("loginPanel").hidden = false; $("loginPanel").scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => $("adminPw").focus({ preventScroll: true }), 350); };
   if (location.hash === "#login") setTimeout(() => { if ($("adminPanel").hidden) { $("loginPanel").hidden = false; $("loginPanel").scrollIntoView({ block: "center" }); $("adminPw").focus(); } }, 1200);
   $("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();

@@ -294,6 +294,7 @@ window.SquaresBackend = (function () {
       }
     }
     $("adminHint").hidden = admin;
+    if ($("showLogin")) $("showLogin").hidden = admin;
     $("adminOn").hidden = !admin;
   }
 
