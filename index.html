@@ -350,8 +350,12 @@ header.band.has-banner .stats{margin-left:auto}
 .limit-note{font-size:13px;color:var(--muted);margin-top:8px}
 
 /* invitations */
-.gate{display:grid;gap:4px;padding:12px;border-radius:8px;background:var(--amber-soft);font-size:14px;margin-bottom:6px}
-.gate b{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:16px}
+.gate{display:grid;gap:6px;margin:4px 0 6px}
+.gatebtn{margin-top:0;font-family:var(--f-display);font-weight:800;font-size:18px;letter-spacing:.06em;text-transform:uppercase;background:var(--turf);color:var(--surface);box-shadow:0 2px 0 color-mix(in srgb,var(--turf) 70%,#000)}
+.gatebtn.req{background:#f5c451;color:#1d1a10;box-shadow:0 2px 0 #c99a1e}
+.gate-warn{margin:0;color:#d11a1a;font-weight:800;font-size:15px;line-height:1.3;text-align:center}
+.gate.flash .gatebtn{animation:gateflash .9s ease-out 2}
+@keyframes gateflash{0%{box-shadow:0 0 0 0 rgba(245,196,81,.75)}100%{box-shadow:0 0 0 14px rgba(245,196,81,0)}}
 .whobox{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:8px;background:var(--turf-soft)}
 .whobox span{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .whobox b{font-size:18px;min-width:0;overflow-wrap:anywhere}
@@ -716,8 +720,8 @@ header.band.hero-on-photo > .wrap{display:none}
     <div class="panel claim">
       <h2>Pick your squares</h2>
       <div id="inviteGate" class="gate" hidden>
-        <b>Invitation required</b>
-        <span>Only invited players can pick squares. Open the personal link from your invitation email, or tap <b>Request an Invitation</b> to ask the commissioner for one.</span>
+        <button class="btn gatebtn" id="gateBtn" type="button">Invitation Required</button>
+        <p class="gate-warn" id="gateWarn" role="alert" hidden>You Must Be Invited &amp; logged in to Make a Selection.</p>
       </div>
       <div id="whoBox" class="whobox" hidden><span>Playing as</span><b id="whoName"></b></div>
       <div id="nameBox">
@@ -917,7 +921,7 @@ header.band.hero-on-photo > .wrap{display:none}
 </div>
 <!--floor--><div class="gridiron-floor" aria-hidden="true"><svg class="post lg l" viewBox="0 -129 66 229" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post sm l" viewBox="0 -43 66 143" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post lg r" viewBox="0 -129 66 229" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><svg class="post sm r" viewBox="0 -43 66 143" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><div class="grass"></div></div><!--/floor-->
 
-<script src="config.js?v=a0ac1135"></script>
-<script src="app.js?v=a0ac1135"></script>
+<script src="config.js?v=642a9f9b"></script>
+<script src="app.js?v=642a9f9b"></script>
 </body>
 </html>

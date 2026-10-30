@@ -347,8 +347,12 @@ header.band.has-banner .stats{margin-left:auto}
 .limit-note{font-size:13px;color:var(--muted);margin-top:8px}
 
 /* invitations */
-.gate{display:grid;gap:4px;padding:12px;border-radius:8px;background:var(--amber-soft);font-size:14px;margin-bottom:6px}
-.gate b{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em;font-size:16px}
+.gate{display:grid;gap:6px;margin:4px 0 6px}
+.gatebtn{margin-top:0;font-family:var(--f-display);font-weight:800;font-size:18px;letter-spacing:.06em;text-transform:uppercase;background:var(--turf);color:var(--surface);box-shadow:0 2px 0 color-mix(in srgb,var(--turf) 70%,#000)}
+.gatebtn.req{background:#f5c451;color:#1d1a10;box-shadow:0 2px 0 #c99a1e}
+.gate-warn{margin:0;color:#d11a1a;font-weight:800;font-size:15px;line-height:1.3;text-align:center}
+.gate.flash .gatebtn{animation:gateflash .9s ease-out 2}
+@keyframes gateflash{0%{box-shadow:0 0 0 0 rgba(245,196,81,.75)}100%{box-shadow:0 0 0 14px rgba(245,196,81,0)}}
 .whobox{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:8px;background:var(--turf-soft)}
 .whobox span{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .whobox b{font-size:18px;min-width:0;overflow-wrap:anywhere}
@@ -713,8 +717,8 @@ header.band.hero-on-photo > .wrap{display:none}
     <div class="panel claim">
       <h2>Pick your squares</h2>
       <div id="inviteGate" class="gate" hidden>
-        <b>Invitation required</b>
-        <span>Only invited players can pick squares. Open the personal link from your invitation email, or tap <b>Request an Invitation</b> to ask the commissioner for one.</span>
+        <button class="btn gatebtn" id="gateBtn" type="button">Invitation Required</button>
+        <p class="gate-warn" id="gateWarn" role="alert" hidden>You Must Be Invited &amp; logged in to Make a Selection.</p>
       </div>
       <div id="whoBox" class="whobox" hidden><span>Playing as</span><b id="whoName"></b></div>
       <div id="nameBox">
@@ -1272,7 +1276,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (sq) { openSheet(id); return; }
     closeSheet();
     if (S.st.cfg.locked) return;
-    if (inviteMode() && !S.st.me && !S.st.admin) { showMsg("claimMsg", "You need your invitation link to pick squares.", "err"); return; }
+    if (inviteMode() && !S.st.me && !S.st.admin) { tripGate(); return; }
     if (!S.selected.has(id) && inviteMode() && S.st.me && !S.st.admin) {
       const max = maxOf(S.st.cfg), held = Object.values(live()).filter((s) => s.mine).length;
       if (max && held + S.selected.size >= max) { showMax(max, held); return; }
@@ -1442,6 +1446,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (!S.st) return;
     queueMicrotask(renderBar);
     const cf = S.st.cfg, n = S.selected.size, btn = $("claimBtn"), inv = inviteMode(), me = S.st.me;
+    btn.hidden = false;
     const name = inv ? (me && me.name) || "" : $("myName").value.trim();
     $("selCount").textContent = n + " selected"; $("selTotal").textContent = money(n * cf.price);
     $("holdNote").textContent = "Unpaid squares go back on the board " + cf.holdMinutes + " minutes after they're picked, unless the commissioner has marked them paid.";
@@ -1451,7 +1456,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     $("styleBox").hidden = inv && !me;
     $("styleNote").hidden = !inv;
     if (cf.locked) { btn.disabled = true; btn.textContent = "Board is locked"; return; }
-    if (inv && !me) { btn.disabled = true; btn.textContent = "Invitation required"; return; }
+    if (inv && !me) { btn.disabled = true; btn.hidden = true; return; }
     if (inv && me.revoked) { btn.disabled = true; btn.textContent = "Your invitation is turned off"; return; }
     if (!S.st.canClaim) { btn.disabled = true; btn.textContent = S.st.claimNote || "Claiming is unavailable"; return; }
     if (!n) { btn.disabled = true; btn.textContent = "Select squares on the board"; return; }
@@ -1984,14 +1989,28 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   // ---------- request an invitation ----------
   function renderReqButton() {
     const show = !!(B.requestInvite && inviteMode() && !S.st.me && !S.st.admin);
-    $("reqBtn").hidden = !show;
+    $("reqBtn").hidden = !show || !!S.gateTripped; // once the top button has turned into "Request an Invitation", don't show two
+    renderGate();
   }
+  // Top-of-panel button for visitors without an invitation. Tapping the board turns it into "Request an Invitation".
+  function renderGate() {
+    const b = $("gateBtn"), tripped = !!S.gateTripped && !!B.requestInvite;
+    b.textContent = tripped ? "Request an Invitation" : "Invitation Required";
+    b.classList.toggle("req", tripped);
+    $("gateWarn").hidden = !S.gateTripped;
+  }
+  function tripGate() {
+    S.gateTripped = true; renderReqButton();
+    const g = $("inviteGate"); g.classList.remove("flash"); void g.offsetWidth; g.classList.add("flash");
+    g.scrollIntoView({ behavior: "smooth", block: window.innerWidth < 960 ? "center" : "nearest" });
+  }
+  $("gateBtn").onclick = () => { if (B.requestInvite) openReq(); };
   function openReq() {
     $("reqModal").hidden = false; $("reqForm").hidden = false; $("reqDone").hidden = true; hide("rqMsgBox");
     document.body.style.overflow = "hidden";
     setTimeout(() => $("rqName").focus(), 30);
   }
-  function closeReq() { $("reqModal").hidden = true; document.body.style.overflow = ""; $("reqBtn").focus(); }
+  function closeReq() { $("reqModal").hidden = true; document.body.style.overflow = ""; ($("reqBtn").hidden ? $("gateBtn") : $("reqBtn")).focus(); }
   $("reqBtn").onclick = openReq;
   $("reqClose").onclick = closeReq;
   $("reqDoneClose").onclick = closeReq;
