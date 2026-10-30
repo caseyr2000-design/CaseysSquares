@@ -698,8 +698,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   function renderAdmin() {
     const st = S.st;
     $("adminPanel").hidden = !st.admin;
-    $("footer").hidden = true;
-    $("showLogin").hidden = !B.hasLogin || st.admin;
+    $("footer").hidden = !B.hasLogin || st.admin;
     if (st.admin) $("loginPanel").hidden = true;
     if (!st.admin) return;
     const cf = st.cfg, active = document.activeElement;
@@ -846,7 +845,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   }
 
   // login (deployable site only)
-  $("showLogin").onclick = (e) => { e.preventDefault(); $("loginPanel").hidden = false; $("loginPanel").scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => $("adminPw").focus({ preventScroll: true }), 350); };
+  $("showLogin").onclick = () => { $("loginPanel").hidden = false; $("adminPw").focus(); };
   if (location.hash === "#login") setTimeout(() => { if ($("adminPanel").hidden) { $("loginPanel").hidden = false; $("loginPanel").scrollIntoView({ block: "center" }); $("adminPw").focus(); } }, 1200);
   $("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();

@@ -675,12 +675,6 @@ header.band.hero-on-photo > .wrap{display:none}
 
 /* legend swatch: the four quarter colors */
 .legend i.lg-win{background:var(--surface);border:0;box-shadow:inset 0 0 0 2px var(--q1);background-image:linear-gradient(90deg,var(--q1) 0 25%,var(--q2) 25% 50%,var(--q3) 50% 75%,var(--q4) 75%);background-size:100% 3px;background-repeat:no-repeat;background-position:bottom}
-/* commissioner login: small link at the bottom right of the screen, on the grass */
-.login-link{position:fixed;z-index:35;right:max(118px,calc(env(safe-area-inset-right,0px) + 118px));bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:12.5px;font-weight:700;color:#fff;text-decoration:none;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.38);text-shadow:0 1px 2px rgba(0,0,0,.5)}
-.login-link:hover{background:rgba(0,0,0,.55)}
-.login-link[hidden]{display:none}
-@media (max-width:600px){.login-link{right:max(52px,calc(env(safe-area-inset-right,0px) + 52px));bottom:calc(3px + env(safe-area-inset-bottom,0px));font-size:11px;padding:3px 8px}}
-@media print{.login-link{display:none}}
 </style>
 </head>
 <body>
@@ -872,7 +866,7 @@ header.band.hero-on-photo > .wrap{display:none}
     </div>
   </aside>
 </main>
-<footer class="wrap" id="footer" hidden></footer>
+<footer class="wrap" id="footer" hidden style="padding-block:0 32px;font-size:13px"><button class="linkbtn" id="showLogin" type="button" style="color:var(--muted)">Commissioner login</button></footer>
 
 <div class="modal" id="reqModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reqTitle">
@@ -927,7 +921,7 @@ header.band.hero-on-photo > .wrap{display:none}
     <button class="btn" id="maxOk" type="button">OK</button>
   </div>
 </div>
-<!--floor--><div class="gridiron-floor" aria-hidden="true"><svg class="post lg l" viewBox="0 -129 66 229" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post sm l" viewBox="0 -43 66 143" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post lg r" viewBox="0 -129 66 229" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><svg class="post sm r" viewBox="0 -43 66 143" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><div class="grass"></div></div><a class="login-link" id="showLogin" href="index.html#login">Commissioner login</a><!--/floor-->
+<!--floor--><div class="gridiron-floor" aria-hidden="true"><svg class="post lg l" viewBox="0 -129 66 229" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post sm l" viewBox="0 -43 66 143" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></svg><svg class="post lg r" viewBox="0 -129 66 229" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-125"/><path d="M53 47 V-125"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><svg class="post sm r" viewBox="0 -43 66 143" aria-hidden="true"><g transform="translate(66 0) scale(-1 1)"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#9a6f08" stroke-width="7.4"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><g stroke="#f5c451" stroke-width="5"><path d="M12 99 L12 70 C12 56 20 47 33 47"/><path d="M13 46 H53"/><path d="M13 47 V-39"/><path d="M53 47 V-39"/></g><path d="M10.5 97 L10.5 72 C10.5 60 16 51 26 48.5" stroke="#fff3c4" stroke-width="1.2" opacity=".75"/></g><rect x="6.5" y="84" width="11" height="16" rx="2" fill="#1d3b8f" stroke="#10265f" stroke-width="1"/></g></svg><div class="grass"></div></div><!--/floor-->
 
 <script>
 /* Google Apps Script backend: calls the functions in Code.gs through google.script.run. */
@@ -1614,8 +1608,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   function renderAdmin() {
     const st = S.st;
     $("adminPanel").hidden = !st.admin;
-    $("footer").hidden = true;
-    $("showLogin").hidden = !B.hasLogin || st.admin;
+    $("footer").hidden = !B.hasLogin || st.admin;
     if (st.admin) $("loginPanel").hidden = true;
     if (!st.admin) return;
     const cf = st.cfg, active = document.activeElement;
@@ -1762,7 +1755,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   }
 
   // login (deployable site only)
-  $("showLogin").onclick = (e) => { e.preventDefault(); $("loginPanel").hidden = false; $("loginPanel").scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => $("adminPw").focus({ preventScroll: true }), 350); };
+  $("showLogin").onclick = () => { $("loginPanel").hidden = false; $("adminPw").focus(); };
   if (location.hash === "#login") setTimeout(() => { if ($("adminPanel").hidden) { $("loginPanel").hidden = false; $("loginPanel").scrollIntoView({ block: "center" }); $("adminPw").focus(); } }, 1200);
   $("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
