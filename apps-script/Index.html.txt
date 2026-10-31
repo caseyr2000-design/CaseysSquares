@@ -675,6 +675,9 @@ header.band.hero-on-photo > .wrap{display:none}
 
 /* legend swatch: the four quarter colors */
 .legend i.lg-win{background:var(--surface);border:0;box-shadow:inset 0 0 0 2px var(--q1);background-image:linear-gradient(90deg,var(--q1) 0 25%,var(--q2) 25% 50%,var(--q3) 50% 75%,var(--q4) 75%);background-size:100% 3px;background-repeat:no-repeat;background-position:bottom}
+
+/* phones: the corner square shows Q1 / HT / Q3 / F in small type */
+.field.compact .hd.corner.quad{font-size:max(7px,calc(var(--cell)*.28));letter-spacing:0;padding:1px;gap:0;font-weight:700}
 </style>
 </head>
 <body>
@@ -1155,8 +1158,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
 
     const b = el("div", "board"); b.setAttribute("role", "grid"); b.setAttribute("aria-label", "Squares board");
     const corner = el("div", "hd corner hdrow");
-    if (cf.nums && S.period === "all" && !isCompact()) { corner.classList.add("quad"); for (const q of QUARTERS) corner.append(el("span", null, q[2])); }
-    else if (cf.nums && S.period === "all") corner.textContent = "#";
+    if (cf.nums && S.period === "all") { corner.classList.add("quad"); for (const q of QUARTERS) corner.append(el("span", null, q[2])); }
     else corner.textContent = cf.nums ? QUARTERS.find((q) => q[0] === S.period)[2] : "#";
     b.append(corner);
     for (let c = 0; c < 10; c++) { const h = headerCell(cf.nums, "col", c); h.classList.add("hdrow"); b.append(h); }

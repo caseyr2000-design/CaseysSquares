@@ -245,8 +245,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
 
     const b = el("div", "board"); b.setAttribute("role", "grid"); b.setAttribute("aria-label", "Squares board");
     const corner = el("div", "hd corner hdrow");
-    if (cf.nums && S.period === "all" && !isCompact()) { corner.classList.add("quad"); for (const q of QUARTERS) corner.append(el("span", null, q[2])); }
-    else if (cf.nums && S.period === "all") corner.textContent = "#";
+    if (cf.nums && S.period === "all") { corner.classList.add("quad"); for (const q of QUARTERS) corner.append(el("span", null, q[2])); }
     else corner.textContent = cf.nums ? QUARTERS.find((q) => q[0] === S.period)[2] : "#";
     b.append(corner);
     for (let c = 0; c < 10; c++) { const h = headerCell(cf.nums, "col", c); h.classList.add("hdrow"); b.append(h); }
