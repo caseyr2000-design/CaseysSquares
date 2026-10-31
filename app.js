@@ -302,7 +302,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   const isCompact = () => window.innerWidth < 600 && !S.big;
   const EDGE = 0.3; // the blue border column (right) and row (bottom), as a fraction of a square
   function fitCell(w, h) {
-    const compact = isCompact(), rowHead = compact ? 0.6 : 0.8;
+    const compact = isCompact(), rowHead = 1; // number squares are full squares
     const side = compact ? 0 : Math.max(30, Math.min(70, w * 0.04)) + 6;
     let c = (w - side - 26) / (10 + rowHead + EDGE);
     if (h) c = Math.min(c, (h - 70) / (10 + rowHead + EDGE + 0.7));
@@ -330,7 +330,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     field.classList.toggle("compact", isCompact());
     field.classList.toggle("short", S.big && window.innerHeight < 560);
     if (S.big) {
-      const body = $("bigBody"), short = window.innerHeight < 560, rowHead = 0.8;
+      const body = $("bigBody"), short = window.innerHeight < 560, rowHead = 1;
       const side = Math.max(30, Math.min(70, body.clientWidth * 0.04)) + 6;
       const byW = (body.clientWidth - side - 26) / (10 + rowHead + EDGE);
       const byH = (body.clientHeight - (short ? 8 : 60) - 26) / (10 + rowHead + EDGE);
