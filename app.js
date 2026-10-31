@@ -90,6 +90,7 @@ window.SquaresBackend = (function () {
     refresh: () => refresh(),
     createInvite: (b) => act("createInvite", adm(), b),
     updateInvite: (id, b) => act("updateInvite", adm(), id, b),
+    deleteInvite: (id) => act("deleteInvite", adm(), id),
     sendInvite: (id, subject, body) => act("sendInvite", adm(), id, subject, body),
     adminAssign: (id, cells) => act("adminAssign", adm(), id, cells),
     requestInvite: (p) => run("requestInvite", p),
@@ -554,6 +555,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     $("selCount").textContent = n + " selected"; $("selTotal").textContent = money(n * cf.price);
     $("holdNote").textContent = "Unpaid squares go back on the board " + cf.holdMinutes + " minutes after they're picked, unless the commissioner has marked them paid.";
     $("inviteGate").hidden = !inv || !!me;
+    $("gateGone").hidden = !(inv && !me && S.st.inviteGone);
     $("whoBox").hidden = !inv || !me; if (me) $("whoName").textContent = me.name + (me.revoked ? " (invitation turned off)" : "");
     $("nameBox").hidden = inv;
     $("styleBox").hidden = inv && !me;
@@ -929,6 +931,19 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       o.title = inv.revoked ? "Let this link pick squares again" : "Stop this link from picking squares or changing style";
       o.onclick = () => invDo(() => B.updateInvite(inv.id, { revoked: !inv.revoked }), inv.revoked ? inv.name + "'s link works again." : inv.name + "'s link is turned off.");
       acts.append(e, o);
+      if (B.deleteInvite) {
+        const d = el("button", "tog danger", S2.delArm === inv.id ? "Tap again to delete" : "Delete"); d.type = "button";
+        d.title = "Delete this invitation. Unpaid squares go back on the board; paid squares stay.";
+        if (S2.delArm === inv.id) d.classList.add("armed");
+        d.onclick = async () => {
+          if (S2.delArm !== inv.id) { S2.delArm = inv.id; renderInvites(); setTimeout(() => { if (S2.delArm === inv.id) { S2.delArm = null; renderInvites(); } }, 4000); return; }
+          S2.delArm = null;
+          let r = null;
+          await invDo(async () => { r = await B.deleteInvite(inv.id); }, null);
+          if (r) showMsg("invMsg", "Deleted " + inv.name + "'s invitation." + (r.released ? " " + r.released + " unpaid square" + (r.released > 1 ? "s" : "") + " went back on the board." : "") + (r.kept ? " Their " + r.kept + " paid square" + (r.kept > 1 ? "s stay" : " stays") + " on the board." : ""), "ok");
+        };
+        acts.append(d);
+      }
       row.append(top, em, acts); L.append(row);
     }
     const unsent = list.filter((i) => !i.revoked && !i.sentAt);
@@ -1094,12 +1109,12 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   // ---------- request an invitation ----------
   function renderReqButton() {
     const show = !!(B.requestInvite && inviteMode() && !S.st.me && !S.st.admin);
-    $("reqBtn").hidden = !show || !!S.gateTripped; // once the top button has turned into "Request an Invitation", don't show two
+    $("reqBtn").hidden = !show || !!S.gateTripped || !!S.st.inviteGone; // once the top button has turned into "Request an Invitation", don't show two
     renderGate();
   }
   // Top-of-panel button for visitors without an invitation. Tapping the board turns it into "Request an Invitation".
   function renderGate() {
-    const b = $("gateBtn"), tripped = !!S.gateTripped && !!B.requestInvite;
+    const b = $("gateBtn"), tripped = (!!S.gateTripped || !!(S.st && S.st.inviteGone)) && !!B.requestInvite;
     b.textContent = tripped ? "Request an Invitation" : "Invitation Required";
     b.classList.toggle("req", tripped);
     $("gateWarn").hidden = !S.gateTripped;

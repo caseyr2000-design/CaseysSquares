@@ -90,6 +90,7 @@ window.SquaresBackend = (function () {
     refresh: () => refresh(),
     createInvite: (b) => act("createInvite", adm(), b),
     updateInvite: (id, b) => act("updateInvite", adm(), id, b),
+    deleteInvite: (id) => act("deleteInvite", adm(), id),
     sendInvite: (id, subject, body) => act("sendInvite", adm(), id, subject, body),
     adminAssign: (id, cells) => act("adminAssign", adm(), id, cells),
     requestInvite: (p) => run("requestInvite", p),

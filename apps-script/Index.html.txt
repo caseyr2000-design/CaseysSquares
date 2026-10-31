@@ -680,6 +680,11 @@ header.band.hero-on-photo > .wrap{display:none}
 .field.compact .hd.corner.quad{font-size:max(7px,calc(var(--cell)*.28));letter-spacing:0;padding:1px;gap:0;font-weight:700}
 
 .pay tr.rake-row td{color:var(--muted);font-style:italic}
+
+/* deleted invitation link */
+.gate-gone{background:color-mix(in srgb,#d11a1a 10%,var(--surface));border:1px solid color-mix(in srgb,#d11a1a 35%,transparent);border-radius:8px;padding:10px 12px}
+.inv-row .acts .tog.danger{color:var(--danger)}
+.inv-row .acts .tog.armed{background:var(--danger);color:#fff;border-color:transparent}
 </style>
 </head>
 <body>
@@ -727,6 +732,7 @@ header.band.hero-on-photo > .wrap{display:none}
     <div class="panel claim">
       <h2>Pick your squares</h2>
       <div id="inviteGate" class="gate" hidden>
+        <p class="gate-warn gate-gone" id="gateGone" role="alert" hidden>This Invitation is No Longer Active. Please Request a New Invitation.</p>
         <button class="btn gatebtn" id="gateBtn" type="button">Invitation Required</button>
         <p class="gate-warn" id="gateWarn" role="alert" hidden>You Must Be Invited &amp; logged in to Make a Selection.</p>
       </div>
@@ -1470,6 +1476,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     $("selCount").textContent = n + " selected"; $("selTotal").textContent = money(n * cf.price);
     $("holdNote").textContent = "Unpaid squares go back on the board " + cf.holdMinutes + " minutes after they're picked, unless the commissioner has marked them paid.";
     $("inviteGate").hidden = !inv || !!me;
+    $("gateGone").hidden = !(inv && !me && S.st.inviteGone);
     $("whoBox").hidden = !inv || !me; if (me) $("whoName").textContent = me.name + (me.revoked ? " (invitation turned off)" : "");
     $("nameBox").hidden = inv;
     $("styleBox").hidden = inv && !me;
@@ -1845,6 +1852,19 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       o.title = inv.revoked ? "Let this link pick squares again" : "Stop this link from picking squares or changing style";
       o.onclick = () => invDo(() => B.updateInvite(inv.id, { revoked: !inv.revoked }), inv.revoked ? inv.name + "'s link works again." : inv.name + "'s link is turned off.");
       acts.append(e, o);
+      if (B.deleteInvite) {
+        const d = el("button", "tog danger", S2.delArm === inv.id ? "Tap again to delete" : "Delete"); d.type = "button";
+        d.title = "Delete this invitation. Unpaid squares go back on the board; paid squares stay.";
+        if (S2.delArm === inv.id) d.classList.add("armed");
+        d.onclick = async () => {
+          if (S2.delArm !== inv.id) { S2.delArm = inv.id; renderInvites(); setTimeout(() => { if (S2.delArm === inv.id) { S2.delArm = null; renderInvites(); } }, 4000); return; }
+          S2.delArm = null;
+          let r = null;
+          await invDo(async () => { r = await B.deleteInvite(inv.id); }, null);
+          if (r) showMsg("invMsg", "Deleted " + inv.name + "'s invitation." + (r.released ? " " + r.released + " unpaid square" + (r.released > 1 ? "s" : "") + " went back on the board." : "") + (r.kept ? " Their " + r.kept + " paid square" + (r.kept > 1 ? "s stay" : " stays") + " on the board." : ""), "ok");
+        };
+        acts.append(d);
+      }
       row.append(top, em, acts); L.append(row);
     }
     const unsent = list.filter((i) => !i.revoked && !i.sentAt);
@@ -2010,12 +2030,12 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
   // ---------- request an invitation ----------
   function renderReqButton() {
     const show = !!(B.requestInvite && inviteMode() && !S.st.me && !S.st.admin);
-    $("reqBtn").hidden = !show || !!S.gateTripped; // once the top button has turned into "Request an Invitation", don't show two
+    $("reqBtn").hidden = !show || !!S.gateTripped || !!S.st.inviteGone; // once the top button has turned into "Request an Invitation", don't show two
     renderGate();
   }
   // Top-of-panel button for visitors without an invitation. Tapping the board turns it into "Request an Invitation".
   function renderGate() {
-    const b = $("gateBtn"), tripped = !!S.gateTripped && !!B.requestInvite;
+    const b = $("gateBtn"), tripped = (!!S.gateTripped || !!(S.st && S.st.inviteGone)) && !!B.requestInvite;
     b.textContent = tripped ? "Request an Invitation" : "Invitation Required";
     b.classList.toggle("req", tripped);
     $("gateWarn").hidden = !S.gateTripped;

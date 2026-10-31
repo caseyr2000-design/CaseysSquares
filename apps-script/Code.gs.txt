@@ -55,7 +55,7 @@ function doPost(e) {
     getState: getState, claim: claim, release: release, restyle: restyle, getImage: getImage,
     login: login, logout: logout, saveSettings: saveSettings, setPaid: setPaid, adminRelease: adminRelease,
     draw: draw, reset: reset, saveScores: saveScores, uploadImage: uploadImage, removeImage: removeImage,
-    createInvite: createInvite, updateInvite: updateInvite, sendInvite: sendInvite, adminAssign: adminAssign,
+    createInvite: createInvite, updateInvite: updateInvite, deleteInvite: deleteInvite, sendInvite: sendInvite, adminAssign: adminAssign,
     exportLedger: exportLedger, requestInvite: requestInvite, dismissRequest: dismissRequest,
     getPage: getPage, savePage: savePage, reportPayment: reportPayment
   };
@@ -170,7 +170,7 @@ function getState(playerToken, adminToken) {
     // A player's name shows to everyone once the square is paid; until then only they and the commissioner see it.
     var hide = !s.paid && !mine && !admin;
     out[id] = {
-      emoji: hide ? '' : (who && who.emoji) || '',
+      emoji: hide ? '' : (who ? who.emoji || '' : s.emoji || ''),
       name: hide ? 'Reserved' : (who ? who.name : (s.name || 'Player')), font: hide ? 'clean' : (who ? who.font : s.font), color: hide ? 'ink' : (who ? who.color : s.color),
       reserved: hide, paid: !!s.paid, claimedAt: s.claimedAt,
       reported: !s.paid && !!s.reportedAt && (mine || admin), reportedVia: !s.paid && s.reportedAt && (mine || admin) ? (s.reportedVia || '') : '',
@@ -181,6 +181,7 @@ function getState(playerToken, adminToken) {
   var res = {
     cfg: publicCfg_(cfg), admin: admin, squares: out, canClaim: !!me && !me.revoked, canUpload: admin, inviteOnly: true,
     me: me ? { name: me.name, font: me.font, color: me.color, emoji: me.emoji || '', revoked: !!me.revoked } : null,
+    inviteGone: !me && !!playerToken && /^[a-f0-9]{32}$/.test(String(playerToken)) && !!all['deltok:' + playerToken],
     emojis: EMOJIS, emojisTaken: Object.keys(inv).map(function (k) { return inv[k]; })
       .filter(function (v) { return v.emoji && !(me && v.id === me.id); }).map(function (v) { return v.emoji; })
   };
@@ -446,6 +447,28 @@ function createInvite(adminToken, b) {
 }
 
 // Only the commissioner changes names; that name shows on all of the person's squares.
+// Deletes an invitation. Unpaid squares go back on the board; paid squares stay and keep the player's name.
+// The old link is remembered ('deltok:<token>') so it can say the invitation is no longer active.
+function deleteInvite(adminToken, id) {
+  requireAdmin_(adminToken);
+  return withLock_(function () {
+    var p = props_(), all = p.getProperties(), raw = all['inv:' + Number(id)];
+    if (!raw) fail_('That invitation no longer exists.');
+    var inv = JSON.parse(raw), w = {}, released = 0, kept = 0;
+    for (var k in all) if (k.indexOf('sq:') === 0) {
+      var s = JSON.parse(all[k]);
+      if (s.iid !== inv.id) continue;
+      if (s.paid) { s.name = inv.name; s.font = inv.font; s.color = inv.color; s.emoji = inv.emoji || ''; delete s.iid; s.pid = 'x' + inv.id; w[k] = JSON.stringify(s); kept++; }
+      else { p.deleteProperty(k); released++; }
+    }
+    w['deltok:' + inv.token] = String(Date.now());
+    p.setProperties(w);
+    p.deleteProperty('tok:' + inv.token);
+    p.deleteProperty('inv:' + inv.id);
+    return { released: released, kept: kept };
+  });
+}
+
 function updateInvite(adminToken, id, b) {
   requireAdmin_(adminToken); b = b || {};
   return withLock_(function () {
