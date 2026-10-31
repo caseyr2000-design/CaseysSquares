@@ -36,6 +36,7 @@ var DEFAULT_CFG = {
     'Numbers Are Randomized for Each Quarter',
     'Winnings paid within 24 hours of the end of the game',
     'If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted',
+    'All Purchases are Final. No Refunds',
     'Have Fun & Good Luck'
   ]
 };
@@ -89,9 +90,12 @@ function getCfg_(all) {
   if (!cfg.paypal) cfg.paypal = DEFAULT_CFG.paypal;
   // Rules saved from an earlier default list (and never edited) follow the current default list.
   if (Array.isArray(cfg.rules)) {
-    var oldDefault = DEFAULT_CFG.rules.filter(function (r) { return r !== 'Numbers Are Randomized for Each Quarter' && r !== 'Have Fun & Good Luck'; });
-    var saved = JSON.stringify(cfg.rules);
-    if (saved === JSON.stringify(oldDefault) || saved === JSON.stringify(oldDefault.concat(['Have Fun & Good Luck']))) cfg.rules = DEFAULT_CFG.rules.slice();
+    var added = ['Numbers Are Randomized for Each Quarter', 'All Purchases are Final. No Refunds', 'Have Fun & Good Luck'];
+    var base = DEFAULT_CFG.rules.filter(function (r) { return added.indexOf(r) < 0; });
+    var without = function (list, drop) { return list.filter(function (r) { return drop.indexOf(r) < 0; }); };
+    var earlier = [base, base.concat(['Have Fun & Good Luck']), without(DEFAULT_CFG.rules, ['All Purchases are Final. No Refunds'])];
+    var savedRules = JSON.stringify(cfg.rules);
+    if (earlier.some(function (l) { return JSON.stringify(l) === savedRules; })) cfg.rules = DEFAULT_CFG.rules.slice();
   }
   return cfg;
 }

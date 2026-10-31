@@ -1361,6 +1361,14 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
         const rl = el("button", "btn ghost", "Release square"); rl.type = "button";
         rl.onclick = () => { if (rl.dataset.armed) { adminDo(() => B.adminRelease([sheetId]), "Square released."); closeSheet(); } else { rl.dataset.armed = "1"; rl.textContent = "Tap again to release"; rl.classList.add("warn"); } };
         acts.append(rl);
+      } else {
+        // paid square: remove it (for example after refunding the player) so it goes back on the board
+        const id = sheetId, who = sq.name, rf = el("button", "btn ghost refund", "Delete square (refund)"); rf.type = "button";
+        rf.onclick = () => {
+          if (!rf.dataset.armed) { rf.dataset.armed = "1"; rf.textContent = "Tap again to delete " + who + "'s paid square"; rf.classList.add("warn"); return; }
+          adminDo(() => B.adminRelease([id]), "Deleted " + who + "'s paid square " + pos(id) + ". Remember to send their refund."); closeSheet();
+        };
+        acts.append(rf);
       }
     } else if (sq.mine && !sq.paid && !cf.locked) {
       const g = el("button", "btn ghost", "Give this square back"); g.type = "button";
@@ -1836,7 +1844,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       const acts = el("div", "acts");
       if (!inv.revoked) {
         if (B.sendInvite) {
-          const s = el("button", "tog", inv.sentAt ? "Resend email" : "Send email"); s.type = "button";
+          const s = el("button", "tog", inv.sentAt ? "Resend" : "Send email"); s.type = "button";
           s.onclick = () => { const t = inviteText(inv); s.disabled = true; s.textContent = "Sending…"; invDo(() => B.sendInvite(inv.id, t.subject, t.body), "Invitation emailed to " + inv.email + "."); };
           acts.append(s);
         } else {
@@ -1844,7 +1852,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
           a.onclick = () => { B.markSent && B.markSent(inv.id).catch(() => {}); showMsg("invMsg", "Gmail opened with the invitation ready. Press Send there."); };
           acts.append(a);
         }
-        const c = el("button", "tog", "Copy link"); c.type = "button"; c.onclick = () => copyText(inviteLink(inv), "Link for " + inv.name + " copied.");
+        const c = el("button", "tog", "Copy"); c.type = "button"; c.onclick = () => copyText(inviteLink(inv), "Link for " + inv.name + " copied.");
         acts.append(c);
       }
       const e = el("button", "tog", "Edit"); e.type = "button"; e.onclick = () => { S2.edit = inv.id; S2.editVals = { name: inv.name, email: inv.email }; renderInvites(); };
@@ -2008,6 +2016,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     "Numbers Are Randomized for Each Quarter",
     "Winnings paid within 24 hours of the end of the game",
     "If all squares are not sold by noon on Super Bowl Sunday, payouts will be adjusted and posted",
+    "All Purchases are Final. No Refunds",
     "Have Fun & Good Luck",
   ];
   const rulesOf = (cf) => (Array.isArray(cf.rules) ? cf.rules : DEFAULT_RULES);
