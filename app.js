@@ -689,6 +689,8 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
       if (s) a.append(el("span", "winner", (win[q] ? "Winner: " + (sqs[win[q]] ? sqs[win[q]].name : "open square") : "") + "  (" + s.top + "–" + s.side + ")"));
       tr.append(a, b); t.append(tr);
     }
+    const rake = Number(cf.payouts.rake) || 0;
+    if (rake) { const rr = el("tr", "rake-row"); rr.append(el("td", null, "The Rake - " + rake + "%"), el("td", null, money((rake / 100) * (pot || full)))); t.append(rr); }
     const tr = el("tr"), a = el("td"), sm = el("small", null, pot ? "Based on paid squares" : "Shown for a full board");
     sm.style.color = "var(--muted)"; a.append(sm); tr.append(a, el("td", null, money(pot || full))); t.append(tr);
   }
@@ -705,7 +707,7 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     if (!S.cfgDirty) {
       setv("cTitle", cf.title); setv("cTop", cf.teamTop); setv("cSide", cf.teamSide); setv("cPrice", cf.price); setv("cHold", cf.holdMinutes);
       setv("cVenmo", cf.venmo ? "@" + cf.venmo : ""); setv("cPaypal", cf.paypal || "");
-      setv("pQ1", cf.payouts.q1); setv("pQ2", cf.payouts.q2); setv("pQ3", cf.payouts.q3); setv("pF", cf.payouts.final);
+      setv("pQ1", cf.payouts.q1); setv("pQ2", cf.payouts.q2); setv("pQ3", cf.payouts.q3); setv("pF", cf.payouts.final); setv("pRake", cf.payouts.rake || 0);
       setv("cMax", cf.maxPerPlayer == null ? DEFAULT_MAX : cf.maxPerPlayer); setv("cContact", cf.contactEmail || "");
       setv("cRules", rulesOf(cf).join("\n"));
     }
@@ -790,10 +792,10 @@ window.SQUARES_THEMES=[{"key": "turf", "label": "Gridiron", "sw": ["#18231b", "#
     catch (e) { showMsg("adminMsg", e.message, "err"); return false; }
   }
 
-  ["cTitle", "cTop", "cSide", "cPrice", "cHold", "cVenmo", "cPaypal", "pQ1", "pQ2", "pQ3", "pF", "cMax", "cContact", "cRules"].forEach((id) => $(id).addEventListener("input", () => (S.cfgDirty = true)));
+  ["cTitle", "cTop", "cSide", "cPrice", "cHold", "cVenmo", "cPaypal", "pQ1", "pQ2", "pQ3", "pF", "pRake", "cMax", "cContact", "cRules"].forEach((id) => $(id).addEventListener("input", () => (S.cfgDirty = true)));
   $("saveCfg").onclick = async () => {
-    const payouts = { q1: Number($("pQ1").value) || 0, q2: Number($("pQ2").value) || 0, q3: Number($("pQ3").value) || 0, final: Number($("pF").value) || 0 };
-    const sum = payouts.q1 + payouts.q2 + payouts.q3 + payouts.final;
+    const payouts = { q1: Number($("pQ1").value) || 0, q2: Number($("pQ2").value) || 0, q3: Number($("pQ3").value) || 0, final: Number($("pF").value) || 0, rake: Number($("pRake").value) || 0 };
+    const sum = payouts.q1 + payouts.q2 + payouts.q3 + payouts.final + payouts.rake;
     if (sum !== 100) return showMsg("adminMsg", "Payout split adds up to " + sum + "%. Make it 100% and save again.", "err");
     const venmo = $("cVenmo").value.trim().replace(/^@/, "");
     if (venmo && !/^[A-Za-z0-9_-]{5,30}$/.test(venmo)) return showMsg("adminMsg", "That doesn't look like a Venmo username. Use the part after the @.", "err");

@@ -25,7 +25,7 @@ var EMOJIS = ['🏈', '🏆', '🔥', '⚡', '🍀', '💰', '👑', '🎯', '�
 var CELL_RE = /^r[0-9]c[0-9]$/;
 var DEFAULT_CFG = {
   title: 'Sunday Night Squares', teamTop: 'Home', teamSide: 'Away', price: 10, holdMinutes: 60,
-  venmo: 'Casey-Ramsay', paypal: 'CaseyRamsay', payouts: { q1: 20, q2: 25, q3: 20, final: 35 },
+  venmo: 'Casey-Ramsay', paypal: 'CaseyRamsay', payouts: { q1: 20, q2: 25, q3: 20, final: 32, rake: 3 },
   locked: false, nums: null, scores: {}, images: {}, scheme: 'turf',
   maxPerPlayer: 8, contactEmail: '',
   rules: [
@@ -79,7 +79,10 @@ function getCfg_(all) {
   var raw = (all || props_().getProperties())['cfg'];
   var cfg = clone_(DEFAULT_CFG), saved = raw ? JSON.parse(raw) : {};
   for (var k in saved) cfg[k] = saved[k];
-  cfg.payouts = Object.assign({}, DEFAULT_CFG.payouts, cfg.payouts || {});
+  var savedPay = cfg.payouts || {};
+  // Splits saved before "The Rake" existed: take the 3% rake out of the final-score share (e.g. 40% -> 37% + 3% rake).
+  if (saved.payouts && savedPay.rake == null) { savedPay = Object.assign({}, savedPay); savedPay.final = Math.max(0, (Number(savedPay.final) || 0) - 3); savedPay.rake = 3; }
+  cfg.payouts = Object.assign({}, DEFAULT_CFG.payouts, savedPay);
   cfg.images = cfg.images || {};
   // Payment accounts fall back to Casey's Venmo / PayPal when none are saved.
   if (!cfg.venmo) cfg.venmo = DEFAULT_CFG.venmo;
@@ -296,7 +299,7 @@ function saveSettings(adminToken, b) {
   requireAdmin_(adminToken); b = b || {};
   return withLock_(function () {
     var cfg = getCfg_(), payouts = {}, sum = 0;
-    QUARTERS.forEach(function (q) { payouts[q] = Math.max(0, Math.min(100, Math.round(Number(b.payouts && b.payouts[q]) || 0))); sum += payouts[q]; });
+    QUARTERS.concat(['rake']).forEach(function (q) { payouts[q] = Math.max(0, Math.min(100, Math.round(Number(b.payouts && b.payouts[q]) || 0))); sum += payouts[q]; });
     if (sum !== 100) fail_('Payout split adds up to ' + sum + '%. Make it 100%.');
     var price = Number(b.price);
     if (!(price >= 1 && price <= 10000)) fail_('Price must be between $1 and $10,000.');
